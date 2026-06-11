@@ -55,6 +55,8 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
 \usepackage{color, soul}    % highlighting during editing
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
@@ -149,6 +151,22 @@ At the core is creating data structures that can be used for understanding, navi
 Relationship Group Diagram: https://clck.ru/3Tv9Ju
 Concept and Concept Instance Diagram: https://clck.ru/3TuV4x
 One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+    every node/.style={circle, draw, fill=blue!15, minimum size=1.4cm, font=\small, align=center},
+    edge from parent/.style={draw, -{Diamond[open, length=6pt, width=5pt]}, thick, color=black!70},
+    level 1/.style={sibling distance=2.5cm, level distance=2cm}
+  ]
+    \node {Concept\\Instance}
+      child {node {Feature}}
+      child {node {Feature}}
+      child {node {Feature}};
+  \end{tikzpicture}
+  \caption{A concept instance binds together the features detected at a spatiotemporal locus.}
+  \label{fig:concept-instance}
+\end{figure}
 
 \subsection{Episodic Timeline}
 - Sensory feature groups are captured sequentially to create a continuous timeline of feature groups. The timeline is not based on a fixed time (e.g. 1 capture per second) but are based on when saliency identifies feature groups. The timeline merely denotes "before" and "after" of a sequence of feature groups.
