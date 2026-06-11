@@ -41,6 +41,7 @@
 
 % "preprint" option is used for arXiv or other preprint submissions
 \usepackage[preprint]{neurips_2026}
+\setcitestyle{round,aysep={}}
 
 % to avoid loading the natbib package, add option nonatbib:
 %    \usepackage[nonatbib]{neurips_2026}
@@ -54,6 +55,7 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
+\usepackage{color, soul}    % highlighting during editing
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
 \title{Structuring Data for Emergent Concepts}
@@ -95,7 +97,6 @@
   % \texttt{email} \\
 }
 
-
 \begin{document}
 
 
@@ -104,12 +105,202 @@
 
 \begin{abstract}
   % TODO
-  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+  TODO
 \end{abstract}
 
 
 
 \section{Introduction}
-Lorem ipsum 2
+There is growing recognition that AI systems need structured world knowledge -- representations that support not just pattern matching but prediction, planning, reasoning, and transfer. World models aim to learn predictive representations. Neurosymbolic systems augment neural networks with structured knowledge to enable reasoning and interpretability. Cognitive architectures organize hand-authored knowledge for reasoning. Agent memory frameworks score past experiences for retrieval. But while each of these pursues structured knowledge, none addresses a prior question that all of them presuppose: how should an agent form such knowledge from its own experience, during operation, without prior human engineering?
+
+The gap is not for lack of interest in the component parts. World models learn predictive representations from experience but require millions of frames of pretraining and produce opaque latent spaces the agent cannot inspect or compose [LeCun 2022; Hafner et al. 2025]. LLM-based agents now score memories for importance to prioritize retrieval [Park et al. 2023], but importance modulates what is *recalled*, not what representations are *formed* -- the underlying embeddings remain frozen from pretraining. Neurosymbolic systems bolt knowledge graphs onto language models to compensate for hallucination and brittleness, but the knowledge is hand-authored or extracted offline, not grown from the agent's own experience [Pan et al. 2024]. Cognitive architectures like ACT-R and SOAR maintain the right kinds of structured knowledge -- productions, chunks, semantic networks -- but cannot learn them from perception; decades of work remain bottlenecked on manual knowledge engineering [Anderson 2007; Laird 2012]. And mechanistic interpretability research has revealed that neural networks do form internal structure -- multi-hop reasoning chains, cross-lingual shared concepts, even full board-state representations in game-playing networks [Conerly et al. 2025; Nanda 2023] -- but this structure is visible only to external researchers with specialized tools, not to the system itself.
+
+These five lines of research are converging on the same need from different directions: AI systems require structured world knowledge that supports prediction, planning, reasoning, and transfer. But none of them answers the prior question: *how should that knowledge form from experience?* What determines which experiences become lasting representations and which are forgotten? What structures and relationships between representations are needed to support general cognition? And what learning signal should drive the process -- not to optimize a policy, but to build a world model?
+
+This gap is conspicuous because biological cognition already fills it. Humans and animals form concepts from single experiences, during operation, with no separation between learning and inference. The mechanisms are well-studied: emotionally and motivationally significant experiences are preferentially consolidated into long-term memory [McGaugh 2004]; prediction error drives event segmentation and model updating [Zacks et al. 2007]; perceptual features are extracted, attended, and organized into compositional conceptual structures grounded in sensory-motor experience \citep{Barsalou_1999}. These are not speculative proposals -- they are established findings in cognitive neuroscience, developmental psychology, and memory research. What has been missing is a computational account that unifies them into a coherent architecture for how concepts form, how they relate, and how they support downstream cognition.
+
+In this paper we propose Concept-Mediated Reinforcement Learning (CMRL), a cognitive architecture in which reinforcement learning creates concepts, and those concepts mediate all subsequent cognition: perception, prediction, planning, reasoning, and action selection. CMRL differs from standard reinforcement learning in a fundamental respect. Where conventional RL uses reward signals to shape a *policy* -- answering "what should I do?" -- CMRL uses a multi-source *significance* signal to shape *representations* -- answering "what should I know?" Significance combines homeostatic drives (hunger, pain, pleasure), prediction error (surprise), and concept-level reinforcement (the utility of prior knowledge) into a unified signal that determines which experiences become concepts, which features those concepts retain, and how concepts relate to one another. The result is a structured, inspectable, grounded world model that grows incrementally from experience.
+
+CMRL is not a single new mechanism but a synthesis. It draws on Barsalou's perceptual symbol systems for representational commitments [Barsalou 1999], on complementary learning systems theory for the episodic-to-semantic consolidation pathway [McClelland et al. 1995], on event segmentation theory for prediction-error-driven temporal structure [Zacks \& Tversky 2001], on emotional tagging research for significance-based retention [McGaugh 2004], and on dual-process theory for the architectural distinction between fast habitual processing and slow deliberate reasoning [Kahneman 2011]. Each of these accounts describes a piece of the puzzle. None provides a complete architecture. The contribution of this paper is to show how they fit together -- how a significance-driven reinforcement learning process operating over perceptually grounded features can produce a structured conceptual system that supports general cognition, and why this specific combination addresses gaps that no existing AI paradigm fills on its own.
+
+We make two claims at different levels of commitment. First, and more strongly: this architecture *can* implement the core functions of cognition -- concept formation, prediction, planning, transfer, and one-shot learning from significant experience. Second, and more tentatively: the architecture captures something about how biological cognition *does* work, drawing as it does on established mechanisms from cognitive science and neuroscience. The first claim can be evaluated through implementation; the second through empirical predictions we make explicit later in this paper.
+
+The rest of the paper is organized as follows. Section 2 motivates the architecture by analyzing what existing approaches lack. Section 3 presents the core mechanisms of CMRL: significance, concept formation, and the dual-process architecture. Section 4 describes how concepts support prediction, planning, and reasoning. Section 5 presents the ROC implementation as a proof of concept. Section 6 states falsifiable predictions and discusses limitations. Section 7 concludes with the implications and open questions of this research program.
+
+\section{Positioning Versus Other Approaches}
+- vs. LLMs / deep learning: CMRL enables one-shot / few-shot learning from experience; does not require massive training datasets or millions of cycles
+- vs. manual knowledge engineering (Cyc, OO-MDP): concepts are learned bottom-up from perception and significance signals, not hand-crafted by engineers
+- vs. formal logic systems (Cyc): does not require first-order logic representations; concepts are grounded in perception
+- vs. traditional RL: interposes a conceptual layer that enables transfer, abstraction, and planning beyond raw state-action mappings
+- [?] Position against other cognitive architectures (ACT-R, SOAR, CLARION)?
+
+\section{Knitting: Formation of Data Structures}
+At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified, created from the environment itself; they are not *a priori*.
+
+\subsection{Sensory Input and Features}
+- The purpose of the sensory system is to reduce a complex environment into a set of points of interest that can serve as the basis of understanding.
+- Sensory inputs (aural, visual, haptic, proprioceptive, etc.) are run through a series of hierarchical feature extractors. These are innate and automatic and have well-known biological analogs in humans (citations in Claude app; Wolfe Ch1 Attention 1998). Examples of sensory features include lines, intersections, motion, sound frequency, etc.
+- Each sensory area has its own salience mechanism (bottom-up attention) (putting aside other top-down attention mechanisms for simplicity for the moment) that innately select key focus areas of the environment -- e.g. motion, bright objects, loud sounds, etc. 
+- Crossmodal attention uses a winner-takes-all mechanism to determine which sensory input will win, after factoring in short-term inhibition of return to ensure the sensory system doesn't repeatedly lock on a single feature
+- Selected features are bound to their corresponding locations as a group to create a "feature group" also known as a "concept instance"
+- These "concept instances" are important because a single concept may be present multiple times at the same time. If I am holding three marbles, they all have the same concept / predictive capability, even though there are three distinct objects.
+- Sensory input is captured as a small graph: a "concept instance" node tying together the features that were at that spatiotemporal locus \hl{Kahneman, Triesman, Gibbs 1992 Object Files; Pylyshyn 1989 FNIST; Wolfe’s Guided Search, now in version 6.0 (2021); Feature binding, attention and object perception Anne Treisman}. For all active concept instances (i.e. the things that have received recent attention) a relationship group is formed that creates relationships denoting the distance, orientation, change in distance, etc. between them.
+
+Relationship Group Diagram: https://clck.ru/3Tv9Ju
+Concept and Concept Instance Diagram: https://clck.ru/3TuV4x
+One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
+
+\subsection{Episodic Timeline}
+- Sensory feature groups are captured sequentially to create a continuous timeline of feature groups. The timeline is not based on a fixed time (e.g. 1 capture per second) but are based on when saliency identifies feature groups. The timeline merely denotes "before" and "after" of a sequence of feature groups.
+- Relationships between feature groups are captured over some previous amount of time: distance, orientation, etc. As we will see later, these relationships are used to relate concepts to each other in merotopolgical or object-relational ways.
+- As features groups move they are tracked using something similar to TLD (Kalal 2011)
+- Changes in feature groups are encoded as "transforms" -- similar to MPEG P-Frames, they track the differences the specific features of feature groups; and the changes in relationships over time. These transforms are used later to provide a basis for prediction.
+- The episodic timeline is a graph of concept instances linked together by episodic links that indicate "before" and "after".
+
+Episodic Diagram: https://clck.ru/3TuV59
+Episodic Diagram with Transforms: https://clck.ru/3TuV56
+
+\subsection{Similarity}
+- ~~Similar episodic timelines are identified based on similar concept instances, similar relationships, similar sequences of events. This can be done online when comparing to the currently active episodic timeline or offline (i.e. dreaming).~~
+- Similarity is not specified here, but it would use an algorithm like Euclidian, Jaccard, Weisfeiler-Lehman kernel, etc. This is an area that would need to be researched.
+
+\subsection{Concept Creation}
+- At this point we have a stream of information, however it is too much to retain and not all of it is necessary to retain for future purposes
+- Novelty creates new concepts: features, relationships, etc that are not similar to others
+- Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
+
+\subsection{Sensory Valence}
+- Sensory valence (reward and punishment) signals (hunger, pain, pleasure, etc.) are not binary, but are continuous (degree of hunger, degree of pain, degree of pleasure, etc.)
+- Sensory valence signals are a tag on concepts ~~or section of an episodic trace~~, enabling them to be retrieved when similar situations are encountered: concepts and episodes that were tagged with hunger can be recalled when the agent is facing the same signal, enabling it to identify concepts and episodes that may aid in the current situation.
+- They may also be immediately available during recall to identify near-term objects or actions to steer towards or away from.
+- Reward and punishment signals are aggregated to concepts and episodes as the positive continuous value "significance", which is used for retention.
+
+Concept Instance: [https://is.gd/MYTItB](https://is.gd/MYTItB)
+
+\subsection{~~Episodic / Temporal Recall~~}
+- ~~There are two forms of recall: temporal recall ("has this situation happened before") and concept recall ("has this concept been encountered before")~~
+- ~~Generally the agent keeps a context of the current temporal timeline it is in -- the "script" of what is currently happening and expected to happen, based on previous episodic memory. In the simplest and most frequent case, the agent uses temporal links from well-established temporal memory / episodic memory to create candidate concepts for recall, which are then matched against sensory input.~~
+- ~~`Your model is built for recognition and recall. But humans constantly encounter genuinely new things and don’t shut down. How does your system distinguish “novel-but-similar” (assimilate into existing concept) from “novel-and-different” (form new concept) from “noise” (ignore)? This is the stability-plasticity dilemma and it’s the central problem of continual learning.`~~
+- ~~==is there really temporal recall if concepts are the locus of prediction?==~~
+
+\subsection{Conceptual Recall}
+- Concepts are recalled through three mechanisms: 1) temporal relationships from the current context, which is extremely fast 2) bottom-up feature recognition, which is slow but broad; this uses the features (sound frequency, lines, intersections) with spreading activation to identify a concept; 3) relationship groups -- based on other recognized concepts in the current context, using relationship groups to identify candidate concepts.
+
+\subsection{Retention / Forgetting}
+- Repetition through recall leads to retention (i.e. reinforcement)
+- Significance leads to retention.
+- Retention is the weight (a continuous numerical value) assigned to a concept or relationship. The weight is used to prioritize recall.
+- Lack of retention signals leads to the information to not be retained (i.e. it is forgotten).
+- Explains both aspects of forgetting due to interference: retroactive interference occurs because the graph develops new, stronger relationships that make old relationships difficult to reach; proactive interference because the weights are already established heavily in favor of historical concepts.
+- \hl{TODO} `Forgetting as a benefit to processes? The information that was useful yesterday may be misleading or unnecessary burden today.`
+
+\subsection{Concept Abstraction}
+- Concepts situated in similar episodic memories with similar features are combined to create more abstract concepts; they are combined together based on features and relationships. The features associated with the concept that are more common have stronger relationships, the features that are less associated with the concept have weaker relationships.
+- Transforms ~~in episodic and conceptual timelines~~ can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
+- The concept instances that contribute to the concept also contribute their known relationships and previous behaviors: the concept is expected to behave the same when the concepts surrounding it are the same.
+- This process is iterative: concepts can be iteratively abstracted, not requiring grounded concepts to form higher-level concepts. (See iterative / recursive abstraction below)
+
+\subsection{~~Episodic Abstraction to Conceptual Timelines~~}
+- ~~Episodic memories are abstracted into conceptual / temporal timelines. Sequences of events are simply "before" and "after", lacking the immediate causality of episodic timelines. Common sequences are abstracted from multiple sequential events with transforms between each into abstract temporal concepts with combined transforms between them. This enables longer-term prediction and simulation: the agent can forecast ahead multiple steps at a time rather than stepping through the fine-grained steps of episodic memory.~~
+- ~~==how are there conceptual timelines if the behavior is associated with the concepts?==~~
+
+Concept First Layer Abstraction Diagram: \hl{TODO}
+Concept Second Layer Abstraction Diagram: \hl{TODO}
+~~Temporal Abstraction Diagram: \hl{TODO}~~
+
+\subsection{Iterative / Recursive Abstraction}
+- Can abstract concepts, relationships, transforms across different types into new concepts.
+- Iterative abstraction need not be across common types (concept + concept abstraction; ~~episode + episode abstraction~~; etc.); New concepts may be formed on mixed types (~~concept + episode abstractions~~; concept + relationship abstraction; etc.)
+- Example: \hl{TODO}
+
+Iterative Abstraction Diagram(s): \hl{TODO}
+
+\subsection{Prediction}
+- The agent is able to predict what will happen next based on the concept instances that are present. Each concept instance, with enough previous experience, has its own predicted behavior and predicted behavior in the presence of other known concepts. 
+- Since the agent can predict the currently present objects, it can predict how its own actions will influence them.
+- Successful prediction leads to reinforcement / additional weighting of the concepts used in the prediction.
+- Failure in prediction leads to a new temporal association with the concepts.
+
+\subsection{Action}
+\begin{itemize}
+    \item Scripts of actions (a/k/a "habits") based on strongly associated conceptual timelines
+    \item Deviations based on prediction error are quickly recovered
+    \item Actions are selected based on prediction: each individual object is predicted giving the agent a prediction of the upcoming state. The agent selects actions by searching through the immediate predictions and potential sensory valence.
+    \item Actions are recorded with relation to the current relationship group, enabling transference of actions to future scenarios with the same or similar context.
+    \item Actions are not selected based on long-term sensory valence, they are selected for general homeostasis. Only if there is a problem (predicted threat, negative sensory valence due to hunger, etc.) will they seek out solutions using Option Generation and Simulation.
+\end{itemize}
+
+\subsection{Timeline Bifurcation}
+- Conceptual timelines bifurcate / diverge based on prediction error: when a prediction error occurs, a new fork is created starting at the current node and a new recording continues from that point on.
+- \hl{TODO} Stability vs plasticity dilemma -- when is a failed prediction a new concept, and when does it get added as a new behavior to an existing concept?
+
+Concept Bifurcation Diagram: \hl{TODO}
+Temporal Bifurcation Diagram: \hl{TODO}
+
+\subsection{Simulation}
+- Concepts and temporal traces enable simulation of known and novel situations
+- Play through temporal links
+- Modified simulation: play through temporal links with modifications
+
+\subsection{Option Generation}
+- Indexes: concepts, timelines, significance
+- "I'm hungry" -- find solutions to the problem through association; uses significance to find previous solutions
+- Seeking out solutions to current problems is based on using Sensory Valence associated with the specific anticipated problem to identify options for solutions, then simulation to select options and potential paths to the options.
+
+\subsection{Introspection}
+- Internal states must be available for observation to enable introspection
+- Internal states that are available for introspection likely include confidence levels of prediction and simulation, recent memory, and recent perception -- basically the ability to inspect the recent episodic timeline.
+
+
+\section{References}
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\section{Sufficiency Tests}
+\subsection{A cat is not a dog}
+- The agent has seen multiple dogs before of different varieties: roughly large, furry, four legged creatures, that pant, and are friendly. The agent encounters a new dog that generally meets the criteria of previous dogs, but has a few subtle differences such as pointier ears and whiskers. When the agent approaches the dog, it runs away which is counter to prediction. When the agent continues to pursue the dog it hisses and swipes its claws at the agent. This is not the behavior of previous dogs, it must be something new. A cat. 
+- This is a demonstration of bifurcation of concepts based on different predictions of the objects.
+
+\subsection{There's a bear in my kitchen}
+- The agent enters the kitchen in a house -- a familiar scenario. There is a bear in the kitchen. The agent is able to recognize the bear without having encountered a bear in the kitchen before. 
+- This is a demonstration of bottom-up recognition with incongruent context.
+## Social Transfer
+- \hl{TODO}
+## Emotion
+- \hl{TODO}
+
+## "Democracy"
+- A frequent challenge to grounded concepts is that they can't create the concept of "democracy" (as an example of a sufficiently abstract concept). Through iterative abstraction, grounded perceptual symbols would get further away from their grounding to create abstract symbols with no grounding. Specifically a high-level sketch of obtaining the concept of "democracy" would look something like:
+	1. Learn the instance of "mother" as the one that is feeding the agent
+	2. Learn the concept of "mothers" as other agents having a similar situation
+	3. Experience "mothers" as setting and enforcing rules to create a concept of "authority figure"
+	4. Learn through social transfer that there are different "authority figures", such as kings and presidents
+	5. Learn that "kings" can be cruel and arbitrary and that fairness / equity / predictability is a desirable outcome
+	6. Learn that people can vote to create equitable rules for the masses and that this is called "democracy"
+## Language
+- Language is sounds and symbols tied to concepts, it has no special mechanisms.
+- Sentence structure and grammar is learned by patterns.
+- Symbol-to-concept binding is arbitrary – unlike feature-grounded concepts, a word shares no features with its referent.
+- Language is also an input channel: create a token based on a sound or a set of symbols that needs to be filled in. It further gets associated with the relationships of words or concepts around it, based on explication, context clues, or assumption.
+## Dog and Frisbee
+- A person throws a frisbee towards a dog. The agent is able to predict that the dog will chase towards the frisbee and whether or not it will be able to intercept it. 
+- The prediction is not based on any reward signal and the agent has no reason to maintain a reward around dogs and frisbees.
+## Stop signs don't matter when you are walking
+- \hl{TODO}
+
+## The drapes are different in his memory
+- Legion season 1, they go back into the memory of Legion to his therapists office, then they visit the office in real life. The drapes have a different pattern in his memory than in real life.
+- This is an example of episodic memory encoding rough concepts rather than precise feature group details.
+
+## A handful of marbles
+- Agent has a memory of holding three marbles. In recollection it may recall the different colors and differentiation of size, but not the specific details of the patterns on the marbles. It will also recall the size of the marbles relative to each other and relative to the hand; the rough positioning in the hand; etc.
+- This is an example of retaining some features in a feature group but eliminating others.
+
+## Driving to work by mistake
+- You are running an errand on the weekend. The route you take starts by following the same route you always take to work, and then diverges part way through to the route you need to continue to run your errand. You accidentally miss your turn for your errand and continue driving to work.
+- This is a demonstration of habits (strong association and strength of recall) dictating actions.
+
+## Daydreaming
+- \hl{TODO}
 
 \end{document}
