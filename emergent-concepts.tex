@@ -133,18 +133,14 @@ The rest of the paper is organized as follows. \hl{...}
 \section{Knitting: Formation of Data Structures}
 At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified, created from the environment itself; they are not *a priori*.
 
-\subsection{Sensory Input and Features}
-- The purpose of the sensory system is to reduce a complex environment into a set of points of interest that can serve as the basis of understanding.
-- Sensory inputs (aural, visual, haptic, proprioceptive, etc.) are run through a series of hierarchical feature extractors. These are innate and automatic and have well-known biological analogs in humans (citations in Claude app; Wolfe Ch1 Attention 1998). Examples of sensory features include lines, intersections, motion, sound frequency, etc.
-- Each sensory area has its own salience mechanism (bottom-up attention) (putting aside other top-down attention mechanisms for simplicity for the moment) that innately select key focus areas of the environment -- e.g. motion, bright objects, loud sounds, etc. 
-- Crossmodal attention uses a winner-takes-all mechanism to determine which sensory input will win, after factoring in short-term inhibition of return to ensure the sensory system doesn't repeatedly lock on a single feature
-- Selected features are bound to their corresponding locations as a group to create a "feature group" also known as a "concept instance"
-- These "concept instances" are important because a single concept may be present multiple times at the same time. If I am holding three marbles, they all have the same concept / predictive capability, even though there are three distinct objects.
-- Sensory input is captured as a small graph: a "concept instance" node tying together the features that were at that spatiotemporal locus \hl{Kahneman, Triesman, Gibbs 1992 Object Files; Pylyshyn 1989 FNIST; Wolfe’s Guided Search, now in version 6.0 (2021); Feature binding, attention and object perception Anne Treisman}. For all active concept instances (i.e. the things that have received recent attention) a relationship group is formed that creates relationships denoting the distance, orientation, change in distance, etc. between them.
+\subsection{Sensory Input and Feature Extraction}
+This section lays out the basic units for forming concepts. Concepts are initially built from features, bound together at a specific space and time by their co-occurance. The mechanisms described in this section are well established both biologically and algorithmically and assumed to be non-controversial; however, the novel contribution is the shape of the data at the end of the feature extraction process that will be used as the basis for formulating and using concepts.
 
-Relationship Group Diagram: https://clck.ru/3Tv9Ju
-Concept and Concept Instance Diagram: https://clck.ru/3TuV4x
-One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
+In order for the agent to reduce the data received from the environment to a manageable stream of information, multisensory input is initially broken down into a series of features using modality-specific feature extractors: edges, lines, vertices, colors, gradients, motion, in vision; frequency, harmonicity in the auditory system; edges, points, curvature, vibration in haptics; and so forth. Extracted features may be compounded to create increasingly complex features, such as creating 'T' or 'L' shape feature detectors from a combination of lines detected by the visual system. Each of these becomes a standalone feature -- an atomic node that will be used to create concepts. The modality, quantity, and types of feature extractors is not central to this argument. It is sufficient to say that there are a large number of them and the more that are available, the better the agent will be at creating differentiated concepts. \hl{Wolfe Ch1 Attention 1998; other citations}
+
+Each feature is mapped to a specific location in 2D or 3D space, relative to the agent. The dimensionality is unimportant, only that features can be colocated at a specific point in time so that they can be bound together. Modality-specific saliency mechanisms \hl{Itti and Koch; Auditory saliency} (such as brightness, loudness, or motion) are used to select candidate feature groups, inhibition of return \hl{citation} is applied to ensure the agent does not become locked to a single salient point to the exclusion of all others, and cross-modal attention selects which features receive bottom-up attention using a winner-take-all mechanism. For the moment, we will put aside other context-specific mechanisms that may modify the selection of feature groups from the environment, such as agentic context that influences the selection of features. The winning features are bound together based on their spatiotemporal locus \hl{Kahneman, Triesman, Gibbs 1992 Object Files; Pylyshyn 1989 FNIST; Wolfe’s Guided Search, now in version 6.0 (2021); Feature binding, attention and object perception Anne Treisman}. The result is a sequential stream of feature groups at specific spatiotemporal locations. In our system, this information will be represented as a graph: a Feature Group node, with edges describing the features that create the composition of the features at that point in time.
+
+- These "concept instances" are important because a single concept may be present multiple times at the same time. If I am holding three marbles, they all have the same concept / predictive capability, even though there are three distinct objects.
 
 \begin{figure}[ht]
   \centering
@@ -161,6 +157,13 @@ One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
   \caption{A concept instance binds together the features detected at a spatiotemporal locus.}
   \label{fig:concept-instance}
 \end{figure}
+
+For all active concept instances (i.e. the things that have received recent attention) a relationship group is formed that creates relationships denoting the distance, orientation, change in distance, etc. between them.
+
+Relationship Group Diagram: https://clck.ru/3Tv9Ju
+Concept and Concept Instance Diagram: https://clck.ru/3TuV4x
+One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
+
 
 \subsection{Episodic Timeline}
 - Sensory feature groups are captured sequentially to create a continuous timeline of feature groups. The timeline is not based on a fixed time (e.g. 1 capture per second) but are based on when saliency identifies feature groups. The timeline merely denotes "before" and "after" of a sequence of feature groups.
