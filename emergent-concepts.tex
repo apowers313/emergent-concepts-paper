@@ -117,7 +117,7 @@ There is growing recognition that AI systems need structured world knowledge -- 
 
 Disposition of problem and existing work \hl{...}
 
-In this paper we propose \hl{...}
+In this paper we propose a cognitive architecture \hl{...}
 
 Not a single new mechanism but a synthesis. \hl{...}
 
@@ -132,6 +132,8 @@ The rest of the paper is organized as follows. \hl{...}
 
 \section{Knitting: Formation of Data Structures}
 At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified, created from the environment itself; they are not *a priori*.
+
+One of the largest challenges with creating a world representation using data is the cold start problem -- how is the agent productive when little or no initial data is available. Therefore, the sections below are presented in the order or bootstrapping the system, putting aside the optimizations and additional benefits of having access to established concepts.
 
 \subsection{Sensory Input and Feature Extraction}
 This section lays out the basic units for forming concepts. Concepts are initially built from features, bound together at a specific space and time by their co-occurance. The mechanisms described in this section are well established both biologically and algorithmically and assumed to be non-controversial; however, the novel contribution is the shape of the data at the end of the feature extraction process that will be used as the basis for formulating and using concepts.
@@ -158,7 +160,11 @@ Each feature is mapped to a specific location in 2D or 3D space, relative to the
   \label{fig:concept-instance}
 \end{figure}
 
-For all active concept instances (i.e. the things that have received recent attention) a relationship group is formed that creates relationships denoting the distance, orientation, change in distance, etc. between them.
+\subsection{Point in Time Relationships}
+As this stream of feature groups is created, all pairwise relationships are defined between within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Relationship Groups, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- relationship groups can be used to identify similar situations that have occurred before.
+
+\citep{Hafri_Firestone_2021}
+\citep{vo_reading_2019}
 
 Relationship Group Diagram: https://clck.ru/3Tv9Ju
 Concept and Concept Instance Diagram: https://clck.ru/3TuV4x
@@ -166,6 +172,7 @@ One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
 
 
 \subsection{Episodic Timeline}
+
 - Sensory feature groups are captured sequentially to create a continuous timeline of feature groups. The timeline is not based on a fixed time (e.g. 1 capture per second) but are based on when saliency identifies feature groups. The timeline merely denotes "before" and "after" of a sequence of feature groups.
 - Relationships between feature groups are captured over some previous amount of time: distance, orientation, etc. As we will see later, these relationships are used to relate concepts to each other in merotopolgical or object-relational ways.
 - As features groups move they are tracked using something similar to TLD (Kalal 2011)
