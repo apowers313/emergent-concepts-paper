@@ -55,7 +55,9 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
+\usepackage{graphicx}       % \resizebox for scaling figures to column width
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric}
 \usetikzlibrary{positioning, arrows.meta}
 \usepackage{color, soul}    % highlighting during editing
 
@@ -148,7 +150,7 @@ Each feature is mapped to a specific location in 2D or 3D space, relative to the
   \centering
   \begin{tikzpicture}[
     every node/.style={circle, draw, fill=blue!15, minimum size=1.4cm, font=\small, align=center},
-    edge from parent/.style={draw, -{Diamond[open, length=6pt, width=5pt]}, thick, color=black!70},
+    edge from parent/.style={draw, {Diamond[length=6pt, width=5pt]}-, thick, color=black!70},
     level 1/.style={sibling distance=2.5cm, level distance=2cm}
   ]
     \node {Concept\\Instance}
@@ -161,23 +163,51 @@ Each feature is mapped to a specific location in 2D or 3D space, relative to the
 \end{figure}
 
 \subsection{Point in Time Relationships}
-As this stream of feature groups is created, all pairwise relationships are defined between within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Relationship Groups, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- relationship groups can be used to identify similar situations that have occurred before.
+As this stream of feature groups is created, all pairwise relationships are defined between within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Relationship Groups, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- relationship groups can be used to identify similar situations that have occurred before.
 
-\citep{Hafri_Firestone_2021}
-\citep{vo_reading_2019}
+\begin{figure}[ht]
+  \centering
+  \resizebox{\linewidth}{!}{%
+  \begin{tikzpicture}[
+    circ/.style={circle, draw, fill=blue!15, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=red!15, font=\scriptsize, align=center, inner sep=1pt},
+    agg/.style={{Diamond[length=7pt, width=6pt]}-, thick, color=black!70},
+    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
+    lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center},
+    x=1cm, y=1cm
+  ]
+    % concept instances (bottom row)
+    \node[circ] (ciL) at (0,0) {Concept\\Instance};
+    \node[circ] (ciR) at (9,0) {Concept\\Instance};
+    % relation types
+    \node[rel] (dr)  at (2.5,2.6) {Distance\\Relation\\size = 7};
+    \node[rel] (dcr) at (6.5,2.6) {Distance\\Change\\Relation\\size = 2};
+    % relationship group
+    \node[rel] (rg) at (4.5,5.0) {Relationship\\Group};
 
-Relationship Group Diagram: https://clck.ru/3Tv9Ju
-Concept and Concept Instance Diagram: https://clck.ru/3TuV4x
-One Concept, Multiple Instances Diagram: https://clck.ru/3TuV53
+    % association: each relation type relates the two concept instances
+    \draw[assoc] (dr)  -- (ciL) node[lbl, pos=0.30] {distance};
+    \draw[assoc] (dr)  -- (ciR) node[lbl, pos=0.12] {distance};
+    \draw[assoc] (dcr) -- (ciL) node[lbl, pos=0.12] {distance\\change};
+    \draw[assoc] (dcr) -- (ciR) node[lbl, pos=0.30] {distance\\change};
 
+    % aggregation: the relationship group is composed of its relation types
+    \draw[agg] (rg) -- (dr)  node[lbl, pos=0.6] {relation type};
+    \draw[agg] (rg) -- (dcr) node[lbl, pos=0.6] {relation type};
+  \end{tikzpicture}%
+  }
+  \caption{A Relationship Group captures the pairwise relationships -- such as distance and change in distance -- between concept instances at a single point in time. Each relation type relates the concept instances it connects. (The features associated with the concept instances have been omitted for clarity.}
+  \label{fig:relationship-group}
+\end{figure}
 
 \subsection{Episodic Timeline}
+Whereas the Relationship Groups are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Relationship Groups to create a dynamic, ongoing view of the environment and its changes. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
 
-- Sensory feature groups are captured sequentially to create a continuous timeline of feature groups. The timeline is not based on a fixed time (e.g. 1 capture per second) but are based on when saliency identifies feature groups. The timeline merely denotes "before" and "after" of a sequence of feature groups.
-- Relationships between feature groups are captured over some previous amount of time: distance, orientation, etc. As we will see later, these relationships are used to relate concepts to each other in merotopolgical or object-relational ways.
-- As features groups move they are tracked using something similar to TLD (Kalal 2011)
-- Changes in feature groups are encoded as "transforms" -- similar to MPEG P-Frames, they track the differences the specific features of feature groups; and the changes in relationships over time. These transforms are used later to provide a basis for prediction.
-- The episodic timeline is a graph of concept instances linked together by episodic links that indicate "before" and "after".
+In addition to creating a before / after link between each Feature Group in the Episodic Timeline, the agent creates a Transform between the Feature Group. The Transform captures the changes in features and relationships.
+
+The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions.
+
+- As features groups move they are tracked using something similar to TLD \citep{kalal_tracking-learning-detection_2012}
 
 Episodic Diagram: https://clck.ru/3TuV59
 Episodic Diagram with Transforms: https://clck.ru/3TuV56
