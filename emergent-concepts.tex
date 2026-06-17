@@ -60,6 +60,13 @@
 \usetikzlibrary{positioning, arrows.meta, shapes.geometric}
 \usetikzlibrary{positioning, arrows.meta}
 \usepackage{color, soul}    % highlighting during editing
+% figure palette (semantic colors shared by all TikZ diagrams)
+\colorlet{featuregroup}{blue!15}          % Feature Group / Concept Instance fill
+\colorlet{relationshipgroup}{red!15}      % Relationship Group fill
+\colorlet{transform}{yellow!30}           % Transform fill
+\definecolor{transformedge}{HTML}{9900CC} % Transform (dashed) edges
+\colorlet{concept}{green!15}              % Concept fill
+\colorlet{conceptedge}{green!55!black}    % Concept link lines
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
 \title{Structuring Data for Emergent Concepts}
@@ -149,7 +156,7 @@ Each feature is mapped to a specific location in 2D or 3D space, relative to the
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}[
-    every node/.style={circle, draw, fill=blue!15, minimum size=1.4cm, font=\small, align=center},
+    every node/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center},
     edge from parent/.style={draw, {Diamond[length=6pt, width=5pt]}-, thick, color=black!70},
     level 1/.style={sibling distance=2.5cm, level distance=2cm}
   ]
@@ -169,8 +176,8 @@ As this stream of feature groups is created, all pairwise relationships are defi
   \centering
   \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
-    circ/.style={circle, draw, fill=blue!15, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    rel/.style={diamond, draw, fill=red!15, font=\scriptsize, align=center, inner sep=1pt},
+    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=relationshipgroup, font=\scriptsize, align=center, inner sep=1pt},
     agg/.style={{Diamond[length=7pt, width=6pt]}-, thick, color=black!70},
     assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
     lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center},
@@ -211,6 +218,121 @@ The Episodic Timeline and its Transforms are the foundation for one-shot online 
 
 Episodic Diagram: https://clck.ru/3TuV59
 Episodic Diagram with Transforms: https://clck.ru/3TuV56
+
+\begin{figure}[ht]
+  \centering
+  \resizebox{\linewidth}{!}{%
+  \begin{tikzpicture}[
+    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=relationshipgroup, font=\scriptsize, align=center, inner sep=1pt},
+    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
+    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
+    epi/.style={-{Stealth[length=9pt]}, line width=1.1pt, color=black},
+    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
+    lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center},
+    elip/.style={font=\Large},
+    x=1cm, y=1cm
+  ]
+    % feature groups (middle row)
+    \node[circ] (fg1)  at (0,0)    {Feature\\Group};
+    \node[circ] (fg2)  at (2.2,0)  {Feature\\Group};
+    \node[circ] (fg3)  at (4.4,0)  {Feature\\Group};
+    \node[circ] (fg4)  at (8.2,0)  {Feature\\Group};
+    \node[circ] (fg5)  at (10.4,0) {Feature\\Group};
+    \node[circ] (fg6)  at (12.6,0) {Feature\\Group};
+    \node[circ] (fg7)  at (14.8,0) {Feature\\Group};
+    \node[circ] (fg8)  at (18.6,0) {Feature\\Group};
+    \node[circ] (fg9)  at (20.8,0) {Feature\\Group};
+    \node[circ] (fg10) at (23.0,0) {Feature\\Group};
+    \node[circ] (fg11) at (25.2,0) {Feature\\Group};
+    \node[circ] (fg12) at (27.4,0) {Feature\\Group};
+    \node[circ] (fg13) at (31.2,0) {Feature\\Group};
+    \node[circ] (fg14) at (33.4,0) {Feature\\Group};
+
+    % relationship groups (top row) on the episodic timeline
+    \node[rel] (rg1) at (2.2,3.2)  {Relationship\\Group};
+    \node[rel] (rg2) at (11.5,3.2) {Relationship\\Group};
+    \node[rel] (rg3) at (23.0,3.2) {Relationship\\Group};
+    \node[rel] (rg4) at (32.3,3.2) {Relationship\\Group};
+    \node[elip] (eb) at (-2.0,3.2) {$\cdots$};
+    \node[elip] (ea) at (35.8,3.2) {$\cdots$};
+
+    % transforms (bottom row)
+    \node[trans] (t1) at (5.2,-3.2)  {Transform};
+    \node[trans] (t2) at (9.6,-3.2)  {Transform};
+    \node[trans] (t3) at (16.0,-3.2) {Transform};
+    \node[trans] (t4) at (21.0,-3.2) {Transform};
+    \node[trans] (t5) at (25.5,-3.2) {Transform};
+    \node[trans] (t6) at (29.0,-3.2) {Transform};
+
+    % episodic timeline (thick before/after links)
+    \draw[epi] (eb)  -- (rg1);
+    \draw[epi] (rg1) -- (rg2) node[lbl, pos=0.5] {episodic};
+    \draw[epi] (rg2) -- (rg3) node[lbl, pos=0.5] {episodic};
+    \draw[epi] (rg3) -- (rg4) node[lbl, pos=0.5] {episodic};
+    \draw[epi] (rg4) -- (ea);
+
+    % relation edges: each Feature Group relates into its Relationship Group
+    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg2)  -- (rg1) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg3)  -- (rg1) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg4)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg5)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg6)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg7)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg8)  -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg9)  -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg10) -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg11) -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg12) -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg13) -- (rg4) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg14) -- (rg4) node[lbl, pos=0.28] {relation};
+
+    % transform edges: earlier Feature Group -> Transform -> later Feature Group
+    \draw[tedge] (fg1)  -- (t1);  \draw[tedge] (t1) -- (fg5);
+    \draw[tedge] (fg3)  -- (t2);  \draw[tedge] (t2) -- (fg7);
+    \draw[tedge] (fg6)  -- (t3);  \draw[tedge] (t3) -- (fg10);
+    \draw[tedge] (fg4)  -- (t4);  \draw[tedge] (t4) -- (fg13);
+    \draw[tedge] (fg8)  -- (t5);  \draw[tedge] (t5) -- (fg14);
+    \draw[tedge] (fg11) -- (t6);  \draw[tedge] (t6) -- (fg13);
+  \end{tikzpicture}%
+  }
+  \caption{The Episodic Timeline links successive Relationship Groups -- the point-in-time snapshots of Figure~\ref{fig:relationship-group} -- with before/after \emph{episodic} edges, forming an ongoing record of the environment. Each Relationship Group relates the Feature Groups present at that point in time, and each \emph{Transform} captures how a Feature Group changes between one point in time and a later one. (The ``before'' and ``after'' ellipses indicate that the timeline extends indefinitely in both directions.)}
+  \label{fig:episodic-timeline}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+    conc/.style={circle, draw, fill=concept, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=relationshipgroup, font=\scriptsize, align=center, inner sep=1pt},
+    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
+    cedge/.style={thick, color=conceptedge},
+    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
+    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
+    x=1cm, y=1cm
+  ]
+    \node[conc]  (cpt) at (0,3.2)   {Concept};
+    \node[circ]  (fg1) at (-3,0)    {Feature\\Group};
+    \node[circ]  (fg2) at (3,0)     {Feature\\Group};
+    \node[trans] (t)   at (0,0)     {Transform};
+    \node[rel]   (rg1) at (-3,-3.2) {Relationship\\Group};
+    \node[rel]   (rg2) at (3,-3.2)  {Relationship\\Group};
+
+    % concept linked to its two feature groups (green lines)
+    \draw[cedge] (cpt) -- (fg1);
+    \draw[cedge] (cpt) -- (fg2);
+    % transform between the two feature groups
+    \draw[tedge] (fg1) -- (t);
+    \draw[tedge] (t) -- (fg2);
+    % each feature group relates into its relationship group
+    \draw[assoc] (fg1) -- (rg1);
+    \draw[assoc] (fg2) -- (rg2);
+  \end{tikzpicture}
+  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Relationship Group} that each one participated in.}
+  \label{fig:concept-structure}
+\end{figure}
 
 \subsection{Similarity}
 - ~~Similar episodic timelines are identified based on similar concept instances, similar relationships, similar sequences of events. This can be done online when comparing to the currently active episodic timeline or offline (i.e. dreaming).~~
