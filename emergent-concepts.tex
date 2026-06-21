@@ -69,7 +69,7 @@
 \colorlet{conceptedge}{green!55!black}    % Concept link lines
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
-\title{Structuring Data for Emergent Concepts}
+\title{Emergent Ontologies for One-Shot Learning}
 
 
 % The \author macro works with any number of authors. There are two commands
@@ -128,6 +128,8 @@ Disposition of problem and existing work \hl{...}
 
 In this paper we propose a cognitive architecture \hl{...}
 
+We argue that the capacity for one-shot, online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and significance signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
+
 Not a single new mechanism but a synthesis. \hl{...}
 
 The rest of the paper is organized as follows. \hl{...}
@@ -140,16 +142,16 @@ The rest of the paper is organized as follows. \hl{...}
 - [?] Position against other cognitive architectures (ACT-R, SOAR, CLARION)?
 
 \section{Knitting: Formation of Data Structures}
-At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified, created from the environment itself; they are not *a priori*.
+At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified and created from the environment itself; they are not *a priori*.
 
 One of the largest challenges with creating a world representation using data is the cold start problem -- how is the agent productive when little or no initial data is available. Therefore, the sections below are presented in the order or bootstrapping the system, putting aside the optimizations and additional benefits of having access to established concepts.
 
 \subsection{Sensory Input and Feature Extraction}
 This section lays out the basic units for forming concepts. Concepts are initially built from features, bound together at a specific space and time by their co-occurance. The mechanisms described in this section are well established both biologically and algorithmically and assumed to be non-controversial; however, the novel contribution is the shape of the data at the end of the feature extraction process that will be used as the basis for formulating and using concepts.
 
-In order for the agent to reduce the data received from the environment to a manageable stream of information, multisensory input is initially broken down into a series of features using modality-specific feature extractors: edges, lines, vertices, colors, gradients, motion, in vision; frequency, harmonicity in the auditory system; edges, points, curvature, vibration in haptics; and so forth. Extracted features may be compounded to create increasingly complex features, such as creating 'T' or 'L' shape feature detectors from a combination of lines detected by the visual system. Each of these becomes a standalone feature -- an atomic node that will be used to create concepts. The modality, quantity, and types of feature extractors is not central to this argument. It is sufficient to say that there are a large number of them and the more that are available, the better the agent will be at creating differentiated concepts. \hl{Wolfe Ch1 Attention 1998; other citations}
+In order for the agent to reduce the data received from the environment to a manageable stream of information, multisensory input is initially broken down into a series of features using modality-specific feature extractors: edges, lines, vertices, colors, gradients, motion, in vision; frequency, harmonicity in the auditory system; edges, points, curvature, vibration in haptics; and so forth. Extracted features may be compounded to create increasingly complex features, such as creating 'T' or 'L' shape feature detectors from a combination of lines detected by the visual system. Each of these becomes a standalone feature -- an atomic node that will be used to create concepts. The modality, quantity, and types of feature extractors is not central to this argument. It is sufficient to say that there are a large number of them and the more that are available, the better the agent will be at creating differentiated concepts. \citep{pashler_attention_2016} \hl{other citations}
 
-Each feature is mapped to a specific location in 2D or 3D space, relative to the agent. The dimensionality is unimportant, only that features can be colocated at a specific point in time so that they can be bound together. Modality-specific saliency mechanisms \hl{Itti and Koch; Auditory saliency} (such as brightness, loudness, or motion) are used to select candidate feature groups, inhibition of return \hl{citation} is applied to ensure the agent does not become locked to a single salient point to the exclusion of all others, and cross-modal attention selects which features receive bottom-up attention using a winner-take-all mechanism. For the moment, we will put aside other context-specific mechanisms that may modify the selection of feature groups from the environment, such as agentic context that influences the selection of features. The winning features are bound together based on their spatiotemporal locus \hl{Kahneman, Triesman, Gibbs 1992 Object Files; Pylyshyn 1989 FNIST; Wolfe’s Guided Search, now in version 6.0 (2021); Feature binding, attention and object perception Anne Treisman}. The result is a sequential stream of feature groups at specific spatiotemporal locations. In our system, this information will be represented as a graph: a Feature Group node, with edges describing the features that create the composition of the features at that point in time.
+Each feature is mapped to a specific location in space, relative to the agent. The dimensionality is unimportant, only that features can be colocated at a specific point in time so that they can be bound together. Modality-specific saliency mechanisms \hl{Itti and Koch; Auditory saliency} (such as brightness, loudness, or motion) are used to select candidate feature groups, inhibition of return \hl{citation} is applied to ensure the agent does not become locked to a single salient point to the exclusion of all others, and cross-modal attention selects which features receive bottom-up attention using a winner-take-all mechanism. For the moment, we will put aside other context-specific mechanisms that may modify the selection of feature groups from the environment, such as agentic context that influences the selection of features. The winning features are bound together based on their spatiotemporal locus \citep{Kahneman_Treisman_Gibbs_1992, pylyshyn_role_1989, Wolfe_2021, treisman_binding_1996}  Feature binding, attention and object perception. The result is a sequential stream of feature groups at specific spatiotemporal locations. In our system, this information will be represented as a graph: a Feature Group node, with edges describing the features that create the composition of the features at that point in time.
 
 - These "concept instances" are important because a single concept may be present multiple times at the same time. If I am holding three marbles, they all have the same concept / predictive capability, even though there are three distinct objects.
 
@@ -208,16 +210,9 @@ As this stream of feature groups is created, all pairwise relationships are defi
 \end{figure}
 
 \subsection{Episodic Timeline}
-Whereas the Relationship Groups are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Relationship Groups to create a dynamic, ongoing view of the environment and its changes. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
+Whereas the Relationship Groups are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Relationship Groups to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
 
-In addition to creating a before / after link between each Feature Group in the Episodic Timeline, the agent creates a Transform between the Feature Group. The Transform captures the changes in features and relationships.
-
-The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions.
-
-- As features groups move they are tracked using something similar to TLD \citep{kalal_tracking-learning-detection_2012}
-
-Episodic Diagram: https://clck.ru/3TuV59
-Episodic Diagram with Transforms: https://clck.ru/3TuV56
+This system links Feature Groups across Relationship Groups, identifying the same or similar feature groups in successive Relationship Groups. This similarity is aided by feature extractors the detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each Feature group that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group changed at different points in time. These transforms and concepts are used later for prediction and simulation.
 
 \begin{figure}[ht]
   \centering
@@ -230,7 +225,6 @@ Episodic Diagram with Transforms: https://clck.ru/3TuV56
     epi/.style={-{Stealth[length=9pt]}, line width=1.1pt, color=black},
     tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
     lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center},
-    elip/.style={font=\Large},
     x=1cm, y=1cm
   ]
     % feature groups (middle row)
@@ -254,8 +248,9 @@ Episodic Diagram with Transforms: https://clck.ru/3TuV56
     \node[rel] (rg2) at (11.5,3.2) {Relationship\\Group};
     \node[rel] (rg3) at (23.0,3.2) {Relationship\\Group};
     \node[rel] (rg4) at (32.3,3.2) {Relationship\\Group};
-    \node[elip] (eb) at (-2.0,3.2) {$\cdots$};
-    \node[elip] (ea) at (35.8,3.2) {$\cdots$};
+    \node[font=\Large] (eb) at (-2.0,3.2) {$\cdots$};
+    \node[font=\Large] (ea) at (35.8,3.2) {$\cdots$};
+
 
     % transforms (bottom row)
     \node[trans] (t1) at (5.2,-3.2)  {Transform};
@@ -301,6 +296,13 @@ Episodic Diagram with Transforms: https://clck.ru/3TuV56
   \label{fig:episodic-timeline}
 \end{figure}
 
+\subsection{Prediction}
+Prediction starts with identifying similar Concepts and Relationship Groups. The worst case scenario is the agent being presented an environment with no prior context. In this scenario Concepts are identified starting with saliency mechanisms selecting a Feature Group and then matching the Feature Group to a Concept based on spreading activation of features in Feature Groups -- whichever Concept has the most features in common with the saliency selected feature group is the most likely matching concept. This happens iteratively as saliency shifts attention around the environment. As Concepts are identified in the current environment, their relationships start to come into play, using Relationship Groups associated with the Feature Groups of the concept to identify Feature Groups that have co-occurred in previous experience. Finally, as time moves forward and motion and change comes into play, the Transformations between Feature Groups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Relationship Groups alone was low.
+
+Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Relationship Groups under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
+
+If the prediction is successful, the strength of the edges in the graphs have their weights increased. If the prediction failed and the weights were low, the weights of the edges in the graph are decreased. If the prediction failed and the weights were high, a new concept is created with the current feature groups and transforms. \hl{add diagrams for successful and failed predictions}
+
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}[
@@ -333,6 +335,8 @@ Episodic Diagram with Transforms: https://clck.ru/3TuV56
   \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Relationship Group} that each one participated in.}
   \label{fig:concept-structure}
 \end{figure}
+
+
 
 \subsection{Similarity}
 - ~~Similar episodic timelines are identified based on similar concept instances, similar relationships, similar sequences of events. This can be done online when comparing to the currently active episodic timeline or offline (i.e. dreaming).~~
@@ -438,12 +442,12 @@ Temporal Bifurcation Diagram: \hl{TODO}
 \subsection{There's a bear in my kitchen}
 - The agent enters the kitchen in a house -- a familiar scenario. There is a bear in the kitchen. The agent is able to recognize the bear without having encountered a bear in the kitchen before. 
 - This is a demonstration of bottom-up recognition with incongruent context.
-## Social Transfer
+\subsection{Social Transfer}
 - \hl{TODO}
-## Emotion
+\subsection{Emotion}
 - \hl{TODO}
 
-## "Democracy"
+\subsection{"Democracy"}
 - A frequent challenge to grounded concepts is that they can't create the concept of "democracy" (as an example of a sufficiently abstract concept). Through iterative abstraction, grounded perceptual symbols would get further away from their grounding to create abstract symbols with no grounding. Specifically a high-level sketch of obtaining the concept of "democracy" would look something like:
 	1. Learn the instance of "mother" as the one that is feeding the agent
 	2. Learn the concept of "mothers" as other agents having a similar situation
@@ -451,30 +455,30 @@ Temporal Bifurcation Diagram: \hl{TODO}
 	4. Learn through social transfer that there are different "authority figures", such as kings and presidents
 	5. Learn that "kings" can be cruel and arbitrary and that fairness / equity / predictability is a desirable outcome
 	6. Learn that people can vote to create equitable rules for the masses and that this is called "democracy"
-## Language
+\subsection{Language}
 - Language is sounds and symbols tied to concepts, it has no special mechanisms.
 - Sentence structure and grammar is learned by patterns.
 - Symbol-to-concept binding is arbitrary – unlike feature-grounded concepts, a word shares no features with its referent.
 - Language is also an input channel: create a token based on a sound or a set of symbols that needs to be filled in. It further gets associated with the relationships of words or concepts around it, based on explication, context clues, or assumption.
-## Dog and Frisbee
+\subsection{Dog and Frisbee}
 - A person throws a frisbee towards a dog. The agent is able to predict that the dog will chase towards the frisbee and whether or not it will be able to intercept it. 
 - The prediction is not based on any reward signal and the agent has no reason to maintain a reward around dogs and frisbees.
-## Stop signs don't matter when you are walking
+\subsection{Stop signs don't matter when you are walking}
 - \hl{TODO}
 
-## The drapes are different in his memory
+\subsection{The drapes are different in his memory}
 - Legion season 1, they go back into the memory of Legion to his therapists office, then they visit the office in real life. The drapes have a different pattern in his memory than in real life.
 - This is an example of episodic memory encoding rough concepts rather than precise feature group details.
 
-## A handful of marbles
+\subsection{A handful of marbles}
 - Agent has a memory of holding three marbles. In recollection it may recall the different colors and differentiation of size, but not the specific details of the patterns on the marbles. It will also recall the size of the marbles relative to each other and relative to the hand; the rough positioning in the hand; etc.
 - This is an example of retaining some features in a feature group but eliminating others.
 
-## Driving to work by mistake
+\subsection{Driving to work by mistake}
 - You are running an errand on the weekend. The route you take starts by following the same route you always take to work, and then diverges part way through to the route you need to continue to run your errand. You accidentally miss your turn for your errand and continue driving to work.
 - This is a demonstration of habits (strong association and strength of recall) dictating actions.
 
-## Daydreaming
+\subsection{Daydreaming}
 - \hl{TODO}
 
 \end{document}
