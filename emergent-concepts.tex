@@ -69,7 +69,7 @@
 \colorlet{conceptedge}{green!55!black}    % Concept link lines
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
-\title{Emergent Ontologies for One-Shot Learning}
+\title{Emergent Ontologies for Continuous Online Learning}
 
 
 % The \author macro works with any number of authors. There are two commands
@@ -128,7 +128,7 @@ Disposition of problem and existing work \hl{...}
 
 In this paper we propose a cognitive architecture \hl{...}
 
-We argue that the capacity for one-shot, online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and significance signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
+We argue that the capacity for onecontinual unsupervised online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and significance signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
 
 Not a single new mechanism but a synthesis. \hl{...}
 
@@ -336,12 +336,6 @@ If the prediction is successful, the strength of the edges in the graphs have th
   \label{fig:concept-structure}
 \end{figure}
 
-
-
-\subsection{Similarity}
-- ~~Similar episodic timelines are identified based on similar concept instances, similar relationships, similar sequences of events. This can be done online when comparing to the currently active episodic timeline or offline (i.e. dreaming).~~
-- Similarity is not specified here, but it would use an algorithm like Euclidian, Jaccard, Weisfeiler-Lehman kernel, etc. This is an area that would need to be researched.
-
 \subsection{Concept Creation}
 - At this point we have a stream of information, however it is too much to retain and not all of it is necessary to retain for future purposes
 - Novelty creates new concepts: features, relationships, etc that are not similar to others
@@ -355,12 +349,6 @@ If the prediction is successful, the strength of the edges in the graphs have th
 
 Concept Instance: [https://is.gd/MYTItB](https://is.gd/MYTItB)
 
-\subsection{~~Episodic / Temporal Recall~~}
-- ~~There are two forms of recall: temporal recall ("has this situation happened before") and concept recall ("has this concept been encountered before")~~
-- ~~Generally the agent keeps a context of the current temporal timeline it is in -- the "script" of what is currently happening and expected to happen, based on previous episodic memory. In the simplest and most frequent case, the agent uses temporal links from well-established temporal memory / episodic memory to create candidate concepts for recall, which are then matched against sensory input.~~
-- ~~`Your model is built for recognition and recall. But humans constantly encounter genuinely new things and don’t shut down. How does your system distinguish “novel-but-similar” (assimilate into existing concept) from “novel-and-different” (form new concept) from “noise” (ignore)? This is the stability-plasticity dilemma and it’s the central problem of continual learning.`~~
-- ~~==is there really temporal recall if concepts are the locus of prediction?==~~
-
 \subsection{Conceptual Recall}
 - Concepts are recalled through three mechanisms: 1) temporal relationships from the current context, which is extremely fast 2) bottom-up feature recognition, which is slow but broad; this uses the features (sound frequency, lines, intersections) with spreading activation to identify a concept; 3) relationship groups -- based on other recognized concepts in the current context, using relationship groups to identify candidate concepts.
 
@@ -373,18 +361,17 @@ Concept Instance: [https://is.gd/MYTItB](https://is.gd/MYTItB)
 - \hl{TODO} `Forgetting as a benefit to processes? The information that was useful yesterday may be misleading or unnecessary burden today.`
 
 \subsection{Concept Abstraction}
-- Concepts situated in similar episodic memories with similar features are combined to create more abstract concepts; they are combined together based on features and relationships. The features associated with the concept that are more common have stronger relationships, the features that are less associated with the concept have weaker relationships.
-- Transforms ~~in episodic and conceptual timelines~~ can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
+- ~~Concepts situated in similar episodic memories with similar features are combined to create more abstract concepts; they are combined together based on features and relationships. The features associated with the concept that are more common have stronger relationships, the features that are less associated with the concept have weaker relationships.~~
+- Frequently co-occurring and predictive features, relationships, and transforms are abstracted out to become new concepts. This is an economic savings for three reasons: 1) rather than holding on to a large amount of detail, only the necessary detail for the high-confidence predictions needs to be retained; 2) relationships can be formed and predictions can happen at higher levels, enabling faster predictions; 3) the newly extracted / abstracted concepts can be applied to more scenarios and newly encountered scenarios, enabling transference of knowledge / prediction.
+- Transforms can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
 - The concept instances that contribute to the concept also contribute their known relationships and previous behaviors: the concept is expected to behave the same when the concepts surrounding it are the same.
 - This process is iterative: concepts can be iteratively abstracted, not requiring grounded concepts to form higher-level concepts. (See iterative / recursive abstraction below)
+- \hl{TODO: how do "red" (a pure feature) and "above" (a pure relationship) and "fast" (a pure transform) become concepts?}
 
-\subsection{~~Episodic Abstraction to Conceptual Timelines~~}
-- ~~Episodic memories are abstracted into conceptual / temporal timelines. Sequences of events are simply "before" and "after", lacking the immediate causality of episodic timelines. Common sequences are abstracted from multiple sequential events with transforms between each into abstract temporal concepts with combined transforms between them. This enables longer-term prediction and simulation: the agent can forecast ahead multiple steps at a time rather than stepping through the fine-grained steps of episodic memory.~~
-- ~~==how are there conceptual timelines if the behavior is associated with the concepts?==~~
+\citep{mandler_perceptual_2000}
 
 Concept First Layer Abstraction Diagram: \hl{TODO}
 Concept Second Layer Abstraction Diagram: \hl{TODO}
-~~Temporal Abstraction Diagram: \hl{TODO}~~
 
 \subsection{Iterative / Recursive Abstraction}
 - Can abstract concepts, relationships, transforms across different types into new concepts.
