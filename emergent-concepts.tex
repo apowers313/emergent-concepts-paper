@@ -54,19 +54,31 @@
 \usepackage{amsfonts}       % blackboard math symbols
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
+\usepackage{minted}       % python code
 \usepackage{xcolor}         % colors
 \usepackage{graphicx}       % \resizebox for scaling figures to column width
+\usepackage{amsmath}        % for \tfrac
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, shapes.geometric}
 \usetikzlibrary{positioning, arrows.meta}
 \usepackage{color, soul}    % highlighting during editing
 % figure palette (semantic colors shared by all TikZ diagrams)
 \colorlet{featuregroup}{blue!15}          % Feature Group / Concept Instance fill
-\colorlet{relationshipgroup}{red!15}      % Relationship Group fill
+\colorlet{context}{red!15}      % Context fill
 \colorlet{transform}{yellow!30}           % Transform fill
 \definecolor{transformedge}{HTML}{9900CC} % Transform (dashed) edges
 \colorlet{concept}{green!15}              % Concept fill
 \colorlet{conceptedge}{green!55!black}    % Concept link lines
+
+% code style
+\setminted[python]{
+    frame=lines,
+    framesep=2mm,
+    baselinestretch=1.2,
+    bgcolor=lightgray!20,
+    fontsize=\footnotesize,
+    linenos
+}
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
 \title{Emergent Ontologies for Continuous Online Learning}
@@ -125,8 +137,26 @@
 There is growing recognition that AI systems need structured world knowledge -- representations that support not just pattern matching but prediction, planning, reasoning, and transfer. Recent research in world models \hl{...}, neurosymbolics \hl{...}
 
 Disposition of problem and existing work \hl{...}
+\hl{**FEP / predictive coding:** Friston (2010; 2006); Rao \& Ballard (1999); Knill \& Pouget (2004); Friston, *Predictive coding under the free-energy principle*, 2009; FEP precision/neuromodulation literature, e.g. cholinergic-modulation PMC4235126}
 
-In this paper we propose a cognitive architecture \hl{...}
+In this paper we propose a cognitive architecture that is a synthesis of existing research. The architecture creates a graph-based world model that we refer to as an ontology. The ontology is created from perceptions of the environment in the same spirit as Barsalou's Perceptual Symbol Systems \citep{Barsalou_1999}. The ontology does not use first order logic for edges / relationships, but probabilistic links that approximate Friston's Free Energy Principle \citep{friston_free_2006}. The ontology is formed through one-shot acquisition, and probabilistic relationships are sculpted over time to provide higher confidence about the environment.
+
+The foundational principles of the architecture are:
+\begin{itemize}
+    \item Symbols (referred to as Concepts) are required for transfactuality and one-shot learning
+    \item Concepts and predictions are acquired on first encounter, confidence and precision is sculpted over time
+    \item Concepts are the locus of transfactuality and prediction (as opposed to many reinforcement learning systems where states are the locus of transfactuality)
+    \item Predictions must be context specific; depending on which concepts are currently present, predictions will be different
+    \item Must be able to remember specific instances (where did I leave my keys) independent from generalities
+    \item Concepts are assumed to be true, and truer the more they are predictively accurate, until a new experience proves otherwise. This "bold prediction" is enabled by graph structure, not probability.
+    \item The structure of the ontology is emergent and stratified. There is no presupposed hierarchy, classes, or relationships. All are learned and path-specific.
+    \item Prediction primacy, reward secondary (based on latent learning and sparse rewards)
+    \item The goal of the system is to provide accurate predictions for homeostasis and simulation to resolve sensory valance issues that arise from time to time.
+    \item Feature extractors and saliency reduce the environment to a tractable, structured space
+    \item Perceptual grounding with a minimal innate endowment
+    \item Must be computationally plausible on commercially available hardware in near real-time (seconds, subsecond), even if it requires high parallelism. This is to focus our work on practical solutions rather than pure theoretical approaches.
+    \item The system is built out of a minimal number of mechanisms
+\end{itemize}
 
 We argue that the capacity for onecontinual unsupervised online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and significance signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
 
@@ -172,14 +202,14 @@ Each feature is mapped to a specific location in space, relative to the agent. T
 \end{figure}
 
 \subsection{Point in Time Relationships}
-As this stream of feature groups is created, all pairwise relationships are defined between within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Relationship Groups, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- relationship groups can be used to identify similar situations that have occurred before.
+As this stream of feature groups is created, all pairwise relationships are defined between within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
 
 \begin{figure}[ht]
   \centering
   \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
     circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    rel/.style={diamond, draw, fill=relationshipgroup, font=\scriptsize, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
     agg/.style={{Diamond[length=7pt, width=6pt]}-, thick, color=black!70},
     assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
     lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center},
@@ -191,8 +221,8 @@ As this stream of feature groups is created, all pairwise relationships are defi
     % relation types
     \node[rel] (dr)  at (2.5,2.6) {Distance\\Relation\\size = 7};
     \node[rel] (dcr) at (6.5,2.6) {Distance\\Change\\Relation\\size = 2};
-    % relationship group
-    \node[rel] (rg) at (4.5,5.0) {Relationship\\Group};
+    % context
+    \node[rel] (rg) at (4.5,5.0) {Context};
 
     % association: each relation type relates the two concept instances
     \draw[assoc] (dr)  -- (ciL) node[lbl, pos=0.30] {distance};
@@ -200,26 +230,26 @@ As this stream of feature groups is created, all pairwise relationships are defi
     \draw[assoc] (dcr) -- (ciL) node[lbl, pos=0.12] {distance\\change};
     \draw[assoc] (dcr) -- (ciR) node[lbl, pos=0.30] {distance\\change};
 
-    % aggregation: the relationship group is composed of its relation types
+    % aggregation: the context is composed of its relation types
     \draw[agg] (rg) -- (dr)  node[lbl, pos=0.6] {relation type};
     \draw[agg] (rg) -- (dcr) node[lbl, pos=0.6] {relation type};
   \end{tikzpicture}%
   }
-  \caption{A Relationship Group captures the pairwise relationships -- such as distance and change in distance -- between concept instances at a single point in time. Each relation type relates the concept instances it connects. (The features associated with the concept instances have been omitted for clarity.}
-  \label{fig:relationship-group}
+  \caption{A Context captures the pairwise relationships -- such as distance and change in distance -- between concept instances at a single point in time. Each relation type relates the concept instances it connects. (The features associated with the concept instances have been omitted for clarity.}
+  \label{fig:context}
 \end{figure}
 
 \subsection{Episodic Timeline}
-Whereas the Relationship Groups are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Relationship Groups to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
+Whereas the Contexts are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Contexts to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
 
-This system links Feature Groups across Relationship Groups, identifying the same or similar feature groups in successive Relationship Groups. This similarity is aided by feature extractors the detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each Feature group that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group changed at different points in time. These transforms and concepts are used later for prediction and simulation.
+This system links Feature Groups across Contexts, identifying the same or similar feature groups in successive Contexts. This similarity is aided by feature extractors the detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each Feature group that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group changed at different points in time. These transforms and concepts are used later for prediction and simulation.
 
 \begin{figure}[ht]
   \centering
   \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
     circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    rel/.style={diamond, draw, fill=relationshipgroup, font=\scriptsize, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
     trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
     assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
     epi/.style={-{Stealth[length=9pt]}, line width=1.1pt, color=black},
@@ -243,11 +273,11 @@ This system links Feature Groups across Relationship Groups, identifying the sam
     \node[circ] (fg13) at (31.2,0) {Feature\\Group};
     \node[circ] (fg14) at (33.4,0) {Feature\\Group};
 
-    % relationship groups (top row) on the episodic timeline
-    \node[rel] (rg1) at (2.2,3.2)  {Relationship\\Group};
-    \node[rel] (rg2) at (11.5,3.2) {Relationship\\Group};
-    \node[rel] (rg3) at (23.0,3.2) {Relationship\\Group};
-    \node[rel] (rg4) at (32.3,3.2) {Relationship\\Group};
+    % contexts (top row) on the episodic timeline
+    \node[rel] (rg1) at (2.2,3.2)  {Context};
+    \node[rel] (rg2) at (11.5,3.2) {Context};
+    \node[rel] (rg3) at (23.0,3.2) {Context};
+    \node[rel] (rg4) at (32.3,3.2) {Context};
     \node[font=\Large] (eb) at (-2.0,3.2) {$\cdots$};
     \node[font=\Large] (ea) at (35.8,3.2) {$\cdots$};
 
@@ -267,8 +297,8 @@ This system links Feature Groups across Relationship Groups, identifying the sam
     \draw[epi] (rg3) -- (rg4) node[lbl, pos=0.5] {episodic};
     \draw[epi] (rg4) -- (ea);
 
-    % relation edges: each Feature Group relates into its Relationship Group
-    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};
+    % relation edges: each Feature Group relates into its Context
+    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};Relationship
     \draw[assoc] (fg2)  -- (rg1) node[lbl, pos=0.28] {relation};
     \draw[assoc] (fg3)  -- (rg1) node[lbl, pos=0.28] {relation};
     \draw[assoc] (fg4)  -- (rg2) node[lbl, pos=0.28] {relation};
@@ -292,23 +322,36 @@ This system links Feature Groups across Relationship Groups, identifying the sam
     \draw[tedge] (fg11) -- (t6);  \draw[tedge] (t6) -- (fg13);
   \end{tikzpicture}%
   }
-  \caption{The Episodic Timeline links successive Relationship Groups -- the point-in-time snapshots of Figure~\ref{fig:relationship-group} -- with before/after \emph{episodic} edges, forming an ongoing record of the environment. Each Relationship Group relates the Feature Groups present at that point in time, and each \emph{Transform} captures how a Feature Group changes between one point in time and a later one. (The ``before'' and ``after'' ellipses indicate that the timeline extends indefinitely in both directions.)}
+  \caption{The Episodic Timeline links successive Contexts -- the point-in-time snapshots of Figure~\ref{fig:context} -- with before/after \emph{episodic} edges, forming an ongoing record of the environment. Each Context relates the Feature Groups present at that point in time, and each \emph{Transform} captures how a Feature Group changes between one point in time and a later one. (The ``before'' and ``after'' ellipses indicate that the timeline extends indefinitely in both directions.)}
   \label{fig:episodic-timeline}
 \end{figure}
 
 \subsection{Prediction}
-Prediction starts with identifying similar Concepts and Relationship Groups. The worst case scenario is the agent being presented an environment with no prior context. In this scenario Concepts are identified starting with saliency mechanisms selecting a Feature Group and then matching the Feature Group to a Concept based on spreading activation of features in Feature Groups -- whichever Concept has the most features in common with the saliency selected feature group is the most likely matching concept. This happens iteratively as saliency shifts attention around the environment. As Concepts are identified in the current environment, their relationships start to come into play, using Relationship Groups associated with the Feature Groups of the concept to identify Feature Groups that have co-occurred in previous experience. Finally, as time moves forward and motion and change comes into play, the Transformations between Feature Groups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Relationship Groups alone was low.
+Prediction starts with identifying similar Concepts and Contexts. The worst case scenario is the agent being presented an environment with no prior context. In this scenario Concepts are identified starting with saliency mechanisms selecting a Feature Group and then matching the Feature Group to a Concept based on spreading activation of features in Feature Groups -- whichever Concept has the most features in common with the saliency selected feature group is the most likely matching concept. This happens iteratively as saliency shifts attention around the environment. As Concepts are identified in the current environment, their relationships start to come into play, using Contexts associated with the Feature Groups of the concept to identify Feature Groups that have co-occurred in previous experience. Finally, as time moves forward and motion and change comes into play, the Transformations between Feature Groups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Contexts alone was low.
 
-Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Relationship Groups under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
+Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Contexts under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
 
-If the prediction is successful, the strength of the edges in the graphs have their weights increased. If the prediction failed and the weights were low, the weights of the edges in the graph are decreased. If the prediction failed and the weights were high, a new concept is created with the current feature groups and transforms. \hl{add diagrams for successful and failed predictions}
+\hl{TODO: rewrite using FEP / bayes / probability for the edges}
+~~If the prediction is successful, the strength of the edges in the graphs have their weights increased. If the prediction failed and the weights were low, the weights of the edges in the graph are decreased. If the prediction failed and the weights were high, a new concept is created with the current feature groups and transforms. \hl{add diagrams for successful and failed predictions}~~
+Each edge carries a Normal-Gamma conjugate prior:
+\begin{itemize}
+    \item $\mathbf{\mu}$, the current best estimate of the feature's value for this concept (the Normal-Gamma mean);
+    \item $\mathbf{\kappa}$, the *effective evidence* behind $\mu$ — its "virtual sample size" — which also sets how much a new observation moves the estimate and how strongly the edge resists being overturned;
+    \item $\mathbf{\alpha}$, the Gamma shape, accumulating evidence about the feature's precision;
+    \item $\mathbf{\beta}$, the Gamma rate, accumulating observed squared deviation, so that $\alpha_{NG}/\beta$ estimates the precision (tightness) of the feature for this concept.
+\end{itemize}
+
+On the n-th consistent observation x, the standard Normal-Gamma updates are
+
+$$\mu' = \frac{\kappa\mu + x}{\kappa + 1}, \qquad \kappa' = \kappa + 1, \qquad \alpha' = \alpha + \tfrac{1}{2}, \qquad \beta' = \beta + \frac{\kappa}{\kappa+1}\cdot\frac{(x - \mu)^2}{2}.$$
+
 
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}[
     conc/.style={circle, draw, fill=concept, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
     circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    rel/.style={diamond, draw, fill=relationshipgroup, font=\scriptsize, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
     trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
     cedge/.style={thick, color=conceptedge},
     tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
@@ -319,8 +362,8 @@ If the prediction is successful, the strength of the edges in the graphs have th
     \node[circ]  (fg1) at (-3,0)    {Feature\\Group};
     \node[circ]  (fg2) at (3,0)     {Feature\\Group};
     \node[trans] (t)   at (0,0)     {Transform};
-    \node[rel]   (rg1) at (-3,-3.2) {Relationship\\Group};
-    \node[rel]   (rg2) at (3,-3.2)  {Relationship\\Group};
+    \node[rel]   (rg1) at (-3,-3.2) {Context};
+    \node[rel]   (rg2) at (3,-3.2)  {Context};
 
     % concept linked to its two feature groups (green lines)
     \draw[cedge] (cpt) -- (fg1);
@@ -328,18 +371,22 @@ If the prediction is successful, the strength of the edges in the graphs have th
     % transform between the two feature groups
     \draw[tedge] (fg1) -- (t);
     \draw[tedge] (t) -- (fg2);
-    % each feature group relates into its relationship group
+    % each feature group relates into its context
     \draw[assoc] (fg1) -- (rg1);
     \draw[assoc] (fg2) -- (rg2);
   \end{tikzpicture}
-  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Relationship Group} that each one participated in.}
+  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Context} that each one participated in.}
   \label{fig:concept-structure}
 \end{figure}
 
-\subsection{Concept Creation}
+\subsection{Acquisition}
 - At this point we have a stream of information, however it is too much to retain and not all of it is necessary to retain for future purposes
 - Novelty creates new concepts: features, relationships, etc that are not similar to others
 - Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
+
+\subsection{Sculpting}
+
+\subsection{Reification}
 
 \subsection{Sensory Valence}
 - Sensory valence (reward and punishment) signals (hunger, pain, pleasure, etc.) are not binary, but are continuous (degree of hunger, degree of pain, degree of pleasure, etc.)
@@ -350,7 +397,7 @@ If the prediction is successful, the strength of the edges in the graphs have th
 Concept Instance: [https://is.gd/MYTItB](https://is.gd/MYTItB)
 
 \subsection{Conceptual Recall}
-- Concepts are recalled through three mechanisms: 1) temporal relationships from the current context, which is extremely fast 2) bottom-up feature recognition, which is slow but broad; this uses the features (sound frequency, lines, intersections) with spreading activation to identify a concept; 3) relationship groups -- based on other recognized concepts in the current context, using relationship groups to identify candidate concepts.
+- Concepts are recalled through three mechanisms: 1) temporal relationships from the current context, which is extremely fast 2) bottom-up feature recognition, which is slow but broad; this uses the features (sound frequency, lines, intersections) with spreading activation to identify a concept; 3) contexts -- based on other recognized concepts in the current context, using contexts to identify candidate concepts.
 
 \subsection{Retention / Forgetting}
 - Repetition through recall leads to retention (i.e. reinforcement)
@@ -361,7 +408,6 @@ Concept Instance: [https://is.gd/MYTItB](https://is.gd/MYTItB)
 - \hl{TODO} `Forgetting as a benefit to processes? The information that was useful yesterday may be misleading or unnecessary burden today.`
 
 \subsection{Concept Abstraction}
-- ~~Concepts situated in similar episodic memories with similar features are combined to create more abstract concepts; they are combined together based on features and relationships. The features associated with the concept that are more common have stronger relationships, the features that are less associated with the concept have weaker relationships.~~
 - Frequently co-occurring and predictive features, relationships, and transforms are abstracted out to become new concepts. This is an economic savings for three reasons: 1) rather than holding on to a large amount of detail, only the necessary detail for the high-confidence predictions needs to be retained; 2) relationships can be formed and predictions can happen at higher levels, enabling faster predictions; 3) the newly extracted / abstracted concepts can be applied to more scenarios and newly encountered scenarios, enabling transference of knowledge / prediction.
 - Transforms can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
 - The concept instances that contribute to the concept also contribute their known relationships and previous behaviors: the concept is expected to behave the same when the concepts surrounding it are the same.
@@ -391,7 +437,7 @@ Iterative Abstraction Diagram(s): \hl{TODO}
     \item Scripts of actions (a/k/a "habits") based on strongly associated conceptual timelines
     \item Deviations based on prediction error are quickly recovered
     \item Actions are selected based on prediction: each individual object is predicted giving the agent a prediction of the upcoming state. The agent selects actions by searching through the immediate predictions and potential sensory valence.
-    \item Actions are recorded with relation to the current relationship group, enabling transference of actions to future scenarios with the same or similar context.
+    \item Actions are recorded with relation to the current context, enabling transference of actions to future scenarios with the same or similar context.
     \item Actions are not selected based on long-term sensory valence, they are selected for general homeostasis. Only if there is a problem (predicted threat, negative sensory valence due to hunger, etc.) will they seek out solutions using Option Generation and Simulation.
 \end{itemize}
 
@@ -420,6 +466,120 @@ Temporal Bifurcation Diagram: \hl{TODO}
 \section{References}
 \bibliographystyle{plainnat}
 \bibliography{references}
+
+\appendix
+\section{Pseudocode}\label{sec:appx:a}
+
+\subsection{Concepts}\label{pseudocode:concepts}
+
+\subsection{Contexts}\label{pseudocode:contexts}
+
+\subsection{Transforms}\label{pseudocode:transforms}
+
+\subsection{Edges}\label{pseudocode:edges}
+\begin{minted}{python}
+class Edge:
+    # the Feature that the edge connects to
+    # TODO: edges aren't just for features
+    feature: Feature
+
+    # Beta counts (present, absent)
+    # presence_prob = a/(a+b) = criteriality
+    a: int
+    b: int
+
+    # Normal-Gamma edge probability for continuous feature values (e.g. color)
+    mu: float
+    kappa: float
+    alpha: float
+    beta: float
+
+    # Dirichlet edge probability for categorical feature values (e.g. up / down / left / right)
+    # TODO: currently not used
+    dir_counts: dict[any, int]  # count of features, any is the range of the feature the edge points to
+    n: int
+
+    def get_feature(self, features: FeatureGroup) -> Feature | None:
+        # looks up the Feature that corresponds to the Feature expected by this Edge
+
+    def probability_present(self) -> float:
+        self.a / (self.a + self.b)
+
+    # is this Edge present and of the right value in a set of Features
+    # TODO: should be more than features
+    def likelihood(self, features: FeatureGroup) -> float:
+        present: bool = self.feature in features
+    
+        if not present:
+            # expected but absent isn't a deal-breaker, maybe an occluded feature
+            return(1 - self.probability_present())
+
+        # calculate Student-t PDF for value
+        val: float = self.get_feature(features).value
+        value_term: float = scipy.stats.t(val, mu=self.mu, kappa=self.kappa, alpha=self.alpha, beta=self.beta)
+    
+        return value_term * self.probability_present()
+
+    def update(self, features: FeatureGroup) -> None:
+        present: bool = self.feature in features
+
+        if not present:
+            self.b += 1
+            return
+
+        # update presence counts
+        self.a += 1
+        self.n_raw += 1
+
+        # sculpt edge value
+        val: float = self.get_feature(features).value
+        k = self.kappa
+        mu_old = self.mu
+        self.mu = (k * mu_old + x) / (k + 1)
+        self.beta = self.beta + (k / (k + 1)) * (val - mu_old)^2 / 2
+        self.kappa = k + 1
+        edge.alpha = self.alpha + 0.5
+        
+\end{minted}
+
+\subsection{Saliency}\label{pseudocode:saliency}
+\begin{minted}{python}
+def get_saliency_points():
+    get_vision_saliency_points()
+    get_aural_saliency_points()
+    get_tactile_saliency_points()
+    # etc.
+
+    crossmodal_saliency_points()
+\end{minted}
+
+\begin{minted}{python}
+def get_vision_saliency_points():
+    feature_map = vision_feature_extractors()
+\end{minted}
+
+\subsection{Main Loop}\label{pseudocode:main-loop}
+\begin{minted}{python}
+def main():
+    obs = get_observation()
+
+    # --- 1. do feature extraction
+    features = feature_extraction()
+
+    # --- 2. get the salient features, bound together by location
+    feature_groups = get_saliency_points(features)
+
+    # --- 3. resolve previous prediction
+
+    # --- 5. identify concepts
+    concepts = identify_concepts(prev_context, feature_groups)
+
+    # --- 6. identify context
+
+    # --- 7. predict
+
+    # --- 8. take action
+\end{minted}
 
 \section{Sufficiency Tests}
 \subsection{A cat is not a dog}
