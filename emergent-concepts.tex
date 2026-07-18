@@ -158,7 +158,7 @@ The foundational principles of the architecture are:
     \item The system is built out of a minimal number of mechanisms
 \end{itemize}
 
-We argue that the capacity for onecontinual unsupervised online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and significance signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
+We argue that the capacity for one continual unsupervised online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and sensory valence signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
 
 Not a single new mechanism but a synthesis. \hl{...}
 
@@ -166,18 +166,18 @@ The rest of the paper is organized as follows. \hl{...}
 
 \section{Positioning Versus Other Approaches}
 - vs. LLMs / deep learning: enables one-shot / few-shot learning from experience; does not require massive training datasets or millions of cycles
-- vs. manual knowledge engineering (Cyc, OO-MDP): concepts are learned bottom-up from perception and significance signals, not hand-crafted by engineers
+- vs. manual knowledge engineering (Cyc, OO-MDP): concepts are learned bottom-up from perception and valence signals, not hand-crafted by engineers
 - vs. formal logic systems (Cyc): does not require first-order logic representations; concepts are grounded in perception
 - vs. traditional RL: interposes a conceptual layer that enables transfer, abstraction, and planning beyond raw state-action mappings
 - [?] Position against other cognitive architectures (ACT-R, SOAR, CLARION)?
 
 \section{Knitting: Formation of Data Structures}
-At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified and created from the environment itself; they are not *a priori*.
+At the core is creating data structures that can be used for understanding, navigating, and manipulating the world -- especially one-shot, online learning. Environmental features and reinforcement signals are turned into concepts and temporal timelines that can be used to model the world, predict action outcomes, and simulate the environment. These concepts and temporal timelines are emergent and stratified and created from the environment itself; they are not \emph{a priori}.
 
-One of the largest challenges with creating a world representation using data is the cold start problem -- how is the agent productive when little or no initial data is available. Therefore, the sections below are presented in the order or bootstrapping the system, putting aside the optimizations and additional benefits of having access to established concepts.
+One of the largest challenges with creating a world representation using data is the cold start problem -- how is the agent productive when little or no initial data is available. Therefore, the sections below are presented in the order of bootstrapping the system, putting aside the optimizations and additional benefits of having access to established concepts.
 
 \subsection{Sensory Input and Feature Extraction}
-This section lays out the basic units for forming concepts. Concepts are initially built from features, bound together at a specific space and time by their co-occurance. The mechanisms described in this section are well established both biologically and algorithmically and assumed to be non-controversial; however, the novel contribution is the shape of the data at the end of the feature extraction process that will be used as the basis for formulating and using concepts.
+This section lays out the basic units for forming concepts. Concepts are initially built from features, bound together at a specific space and time by their co-occurrenced. The mechanisms described in this section are well established both biologically and algorithmically and assumed to be non-controversial; however, the novel contribution is the shape of the data at the end of the feature extraction process that will be used as the basis for formulating and using concepts.
 
 In order for the agent to reduce the data received from the environment to a manageable stream of information, multisensory input is initially broken down into a series of features using modality-specific feature extractors: edges, lines, vertices, colors, gradients, motion, in vision; frequency, harmonicity in the auditory system; edges, points, curvature, vibration in haptics; and so forth. Extracted features may be compounded to create increasingly complex features, such as creating 'T' or 'L' shape feature detectors from a combination of lines detected by the visual system. Each of these becomes a standalone feature -- an atomic node that will be used to create concepts. The modality, quantity, and types of feature extractors is not central to this argument. It is sufficient to say that there are a large number of them and the more that are available, the better the agent will be at creating differentiated concepts. \citep{pashler_attention_2016} \hl{other citations}
 
@@ -202,7 +202,7 @@ Each feature is mapped to a specific location in space, relative to the agent. T
 \end{figure}
 
 \subsection{Point in Time Relationships}
-As this stream of feature groups is created, all pairwise relationships are defined between within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
+As this stream of feature groups is created, all pairwise relationships are defined within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
 
 \begin{figure}[ht]
   \centering
@@ -242,7 +242,7 @@ As this stream of feature groups is created, all pairwise relationships are defi
 \subsection{Episodic Timeline}
 Whereas the Contexts are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Contexts to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
 
-This system links Feature Groups across Contexts, identifying the same or similar feature groups in successive Contexts. This similarity is aided by feature extractors the detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each Feature group that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group changed at different points in time. These transforms and concepts are used later for prediction and simulation.
+This system links Feature Groups across Contexts, identifying the same or similar feature groups in successive Contexts. This similarity is aided by feature extractors that detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each Feature group that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group changed at different points in time. These transforms and concepts are used later for prediction and simulation.
 
 \begin{figure}[ht]
   \centering
@@ -298,7 +298,7 @@ This system links Feature Groups across Contexts, identifying the same or simila
     \draw[epi] (rg4) -- (ea);
 
     % relation edges: each Feature Group relates into its Context
-    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};Relationship
+    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};
     \draw[assoc] (fg2)  -- (rg1) node[lbl, pos=0.28] {relation};
     \draw[assoc] (fg3)  -- (rg1) node[lbl, pos=0.28] {relation};
     \draw[assoc] (fg4)  -- (rg2) node[lbl, pos=0.28] {relation};
@@ -332,8 +332,9 @@ Prediction starts with identifying similar Concepts and Contexts. The worst case
 Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Contexts under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
 
 \hl{TODO: rewrite using FEP / bayes / probability for the edges}
-~~If the prediction is successful, the strength of the edges in the graphs have their weights increased. If the prediction failed and the weights were low, the weights of the edges in the graph are decreased. If the prediction failed and the weights were high, a new concept is created with the current feature groups and transforms. \hl{add diagrams for successful and failed predictions}~~
-Each edge carries a Normal-Gamma conjugate prior:
+
+Each edge carries a Normal-Gamma conjugate prior that is "sculpted" during the use of the edge to determine the probability of the nodes along the edge being a match. After matching the current context, or the concepts of the context if no context exists, prediction uses these edges to determine the most likely transforms that will apply to each concept and predict the next state of each concept in terms of its features and relationships to other concepts. The Normal-Gamma conjugate prior has its typical form:
+
 \begin{itemize}
     \item $\mathbf{\mu}$, the current best estimate of the feature's value for this concept (the Normal-Gamma mean);
     \item $\mathbf{\kappa}$, the *effective evidence* behind $\mu$ — its "virtual sample size" — which also sets how much a new observation moves the estimate and how strongly the edge resists being overturned;
@@ -345,6 +346,7 @@ On the n-th consistent observation x, the standard Normal-Gamma updates are
 
 $$\mu' = \frac{\kappa\mu + x}{\kappa + 1}, \qquad \kappa' = \kappa + 1, \qquad \alpha' = \alpha + \tfrac{1}{2}, \qquad \beta' = \beta + \frac{\kappa}{\kappa+1}\cdot\frac{(x - \mu)^2}{2}.$$
 
+See Section \ref{pseudocode:edges} for pseudocode detailing the implementation of Edges.
 
 \begin{figure}[ht]
   \centering
@@ -389,26 +391,119 @@ $$\mu' = \frac{\kappa\mu + x}{\kappa + 1}, \qquad \kappa' = \kappa + 1, \qquad \
 \subsection{Reification}
 
 \subsection{Sensory Valence}
-- Sensory valence (reward and punishment) signals (hunger, pain, pleasure, etc.) are not binary, but are continuous (degree of hunger, degree of pain, degree of pleasure, etc.)
-- Sensory valence signals are a tag on concepts ~~or section of an episodic trace~~, enabling them to be retrieved when similar situations are encountered: concepts and episodes that were tagged with hunger can be recalled when the agent is facing the same signal, enabling it to identify concepts and episodes that may aid in the current situation.
+- Sensory valence (reward and punishment) signals (hunger, pain, pleasure, etc.) are not binary, but are continuous (degree of hunger, degree of pain, degree of pleasure, etc.). The signal is negative for situations to be avoided.
+- Sensory valence signals are nodes that are linked to contexts based on the their continuous value as a weight, enabling them to be retrieved when similar situations are encountered: contexts that were tagged with hunger can be recalled when the agent is facing the same signal, enabling it to identify contexts that may aid in the current situation.
 - They may also be immediately available during recall to identify near-term objects or actions to steer towards or away from.
-- Reward and punishment signals are aggregated to concepts and episodes as the positive continuous value "significance", which is used for retention.
+- Sensory valence acts as an amplification signal for concept and context acquisition, ensuring that high valence scenarios are available for recall to guide attraction or avoidance in action selection.
+- Valence also acts as a multiplier on the novelty threshold: high-stakes prediction failures spawn new structure sooner than low-stakes ones.
 
-Concept Instance: [https://is.gd/MYTItB](https://is.gd/MYTItB)
+\begin{figure}[ht]
+  \centering
+  \resizebox{\linewidth}{!}{%
+  \begin{tikzpicture}[
+    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
+    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
+    val/.style={circle, draw, fill=green!15, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
+    epi/.style={-{Stealth[length=9pt]}, line width=1.1pt, color=black},
+    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
+    lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center},
+    x=1cm, y=1cm
+  ]
+    % feature groups (middle row)
+    \node[circ] (fg1)  at (0,0)    {Feature\\Group};
+    \node[circ] (fg2)  at (2.2,0)  {Feature\\Group};
+    \node[circ] (fg3)  at (4.4,0)  {Feature\\Group};
+    \node[circ] (fg4)  at (8.2,0)  {Feature\\Group};
+    \node[circ] (fg5)  at (10.4,0) {Feature\\Group};
+    \node[circ] (fg6)  at (12.6,0) {Feature\\Group};
+    \node[circ] (fg7)  at (14.8,0) {Feature\\Group};
+    \node[circ] (fg8)  at (18.6,0) {Feature\\Group};
+    \node[circ] (fg9)  at (20.8,0) {Feature\\Group};
+    \node[circ] (fg10) at (23.0,0) {Feature\\Group};
+    \node[circ] (fg11) at (25.2,0) {Feature\\Group};
+    \node[circ] (fg12) at (27.4,0) {Feature\\Group};
+    \node[circ] (fg13) at (31.2,0) {Feature\\Group};
+    \node[circ] (fg14) at (33.4,0) {Feature\\Group};
+
+    % contexts (top row) on the episodic timeline
+    \node[rel] (rg1) at (2.2,3.2)  {Context};
+    \node[rel] (rg2) at (11.5,3.2) {Context};
+    \node[rel] (rg3) at (23.0,3.2) {Context};
+    \node[rel] (rg4) at (32.3,3.2) {Context};
+    \node[font=\Large] (eb) at (-2.0,3.2) {$\cdots$};
+    \node[font=\Large] (ea) at (35.8,3.2) {$\cdots$};
+
+    % valence tags (above the contexts)
+    \node[val] (v1) at (2.2,6.2)  {Valence};
+    \node[val] (v2) at (23.0,6.2) {Valence};
+    \node[val] (v3) at (32.3,6.2) {Valence};
+
+    % transforms (bottom row)
+    \node[trans] (t1) at (5.2,-3.2)  {Transform};
+    \node[trans] (t2) at (9.6,-3.2)  {Transform};
+    \node[trans] (t3) at (16.0,-3.2) {Transform};
+    \node[trans] (t4) at (21.0,-3.2) {Transform};
+    \node[trans] (t5) at (25.5,-3.2) {Transform};
+    \node[trans] (t6) at (29.0,-3.2) {Transform};
+
+    % episodic timeline (thick before/after links)
+    \draw[epi] (eb)  -- (rg1);
+    \draw[epi] (rg1) -- (rg2) node[lbl, pos=0.5] {episodic};
+    \draw[epi] (rg2) -- (rg3) node[lbl, pos=0.5] {episodic};
+    \draw[epi] (rg3) -- (rg4) node[lbl, pos=0.5] {episodic};
+    \draw[epi] (rg4) -- (ea);
+
+    % relation edges: each Feature Group relates into its Context
+    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg2)  -- (rg1) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg3)  -- (rg1) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg4)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg5)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg6)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg7)  -- (rg2) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg8)  -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg9)  -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg10) -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg11) -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg12) -- (rg3) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg13) -- (rg4) node[lbl, pos=0.28] {relation};
+    \draw[assoc] (fg14) -- (rg4) node[lbl, pos=0.28] {relation};
+
+    % valence edges: each Valence node tags one Context
+    \draw[assoc] (v1) -- (rg1) node[lbl, pos=0.5] {valence};
+    \draw[assoc] (v2) -- (rg3) node[lbl, pos=0.5] {valence};
+    \draw[assoc] (v3) -- (rg4) node[lbl, pos=0.5] {valence};
+
+    % transform edges: earlier Feature Group -> Transform -> later Feature Group
+    \draw[tedge] (fg1)  -- (t1);  \draw[tedge] (t1) -- (fg5);
+    \draw[tedge] (fg3)  -- (t2);  \draw[tedge] (t2) -- (fg7);
+    \draw[tedge] (fg6)  -- (t3);  \draw[tedge] (t3) -- (fg10);
+    \draw[tedge] (fg4)  -- (t4);  \draw[tedge] (t4) -- (fg13);
+    \draw[tedge] (fg8)  -- (t5);  \draw[tedge] (t5) -- (fg14);
+    \draw[tedge] (fg11) -- (t6);  \draw[tedge] (t6) -- (fg13);
+  \end{tikzpicture}%
+  }
+  \caption{Sensory valence signals attach to the episodic timeline of Figure~\ref{fig:episodic-timeline}: each \emph{Valence} node tags a Context with the continuous reward or punishment signal (e.g. hunger, pain, pleasure) present at that point in time. Not every Context carries a valence tag. The tags index the timeline for retrieval: when a similar signal recurs, the tagged Contexts and their concepts can be recalled.}
+  \label{fig:sensory-valence}
+\end{figure}
 
 \subsection{Conceptual Recall}
 - Concepts are recalled through three mechanisms: 1) temporal relationships from the current context, which is extremely fast 2) bottom-up feature recognition, which is slow but broad; this uses the features (sound frequency, lines, intersections) with spreading activation to identify a concept; 3) contexts -- based on other recognized concepts in the current context, using contexts to identify candidate concepts.
 
 \subsection{Retention / Forgetting}
-- Repetition through recall leads to retention (i.e. reinforcement)
-- Significance leads to retention.
-- Retention is the weight (a continuous numerical value) assigned to a concept or relationship. The weight is used to prioritize recall.
-- Lack of retention signals leads to the information to not be retained (i.e. it is forgotten).
+- Repetition through recall leads to retention (i.e. reinforcement). Every successful recall sculpts edges to increase their probability of their associated concepts being referenced in the future.
+- Forgetting is the process of reducing the weight of edges through decay (i.e. the effective evidence $\kappa$ and the presence counts decay towards a plasticity floor). Edges are not removed, but lose their priority in recall and / or reduce their confidence. "Forgotten" concepts are hard to reach but not gone and on re-encounter they can be recalled and the edges will quickly increase in confidence to restore its utility.
+- Forgetting is essential to the plasticity of the agent -- de-prioritizing old information allows new information to be utilized in the correct context. For example, if an object is moved the agent must be able to reduce the probability of the old location and increase the probability of the new location so that it can be recalled in the correct context.
 - Explains both aspects of forgetting due to interference: retroactive interference occurs because the graph develops new, stronger relationships that make old relationships difficult to reach; proactive interference because the weights are already established heavily in favor of historical concepts.
-- \hl{TODO} `Forgetting as a benefit to processes? The information that was useful yesterday may be misleading or unnecessary burden today.`
 
-\subsection{Concept Abstraction}
+\citep{ryan_frankland_2022, underwood_1957, oleary_natural_2024, bjork_bjork_1992}
+
+\subsection{Concept Abstraction, Hoisting, Inheritance}
 - Frequently co-occurring and predictive features, relationships, and transforms are abstracted out to become new concepts. This is an economic savings for three reasons: 1) rather than holding on to a large amount of detail, only the necessary detail for the high-confidence predictions needs to be retained; 2) relationships can be formed and predictions can happen at higher levels, enabling faster predictions; 3) the newly extracted / abstracted concepts can be applied to more scenarios and newly encountered scenarios, enabling transference of knowledge / prediction.
+- When a new level of concept is created, it hoists up the common contexts, feature groups, and transforms -- adding them to the new parent concept and removing them from the common concepts.
+- Child concepts inherit the contexts, feature groups, and transforms of their parents -- the common "dog" class of features and behaviors applies to all its children. Individual children can override the inheritance by retaining or adding specific features, contexts, or transforms to their own concepts enabling child-concept specific predictions. For example, "all dogs are generally nice but Fido tries to bite".
 - Transforms can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
 - The concept instances that contribute to the concept also contribute their known relationships and previous behaviors: the concept is expected to behave the same when the concepts surrounding it are the same.
 - This process is iterative: concepts can be iteratively abstracted, not requiring grounded concepts to form higher-level concepts. (See iterative / recursive abstraction below)
@@ -421,7 +516,7 @@ Concept Second Layer Abstraction Diagram: \hl{TODO}
 
 \subsection{Iterative / Recursive Abstraction}
 - Can abstract concepts, relationships, transforms across different types into new concepts.
-- Iterative abstraction need not be across common types (concept + concept abstraction; ~~episode + episode abstraction~~; etc.); New concepts may be formed on mixed types (~~concept + episode abstractions~~; concept + relationship abstraction; etc.)
+- Iterative abstraction need not be across common types (concept + concept abstraction; etc.); New concepts may be formed on mixed types (concept + relationship abstraction; etc.)
 - Example: \hl{TODO}
 
 Iterative Abstraction Diagram(s): \hl{TODO}
@@ -441,21 +536,14 @@ Iterative Abstraction Diagram(s): \hl{TODO}
     \item Actions are not selected based on long-term sensory valence, they are selected for general homeostasis. Only if there is a problem (predicted threat, negative sensory valence due to hunger, etc.) will they seek out solutions using Option Generation and Simulation.
 \end{itemize}
 
-\subsection{Timeline Bifurcation}
-- Conceptual timelines bifurcate / diverge based on prediction error: when a prediction error occurs, a new fork is created starting at the current node and a new recording continues from that point on.
-- \hl{TODO} Stability vs plasticity dilemma -- when is a failed prediction a new concept, and when does it get added as a new behavior to an existing concept?
-
-Concept Bifurcation Diagram: \hl{TODO}
-Temporal Bifurcation Diagram: \hl{TODO}
-
 \subsection{Simulation}
 - Concepts and temporal traces enable simulation of known and novel situations
 - Play through temporal links
 - Modified simulation: play through temporal links with modifications
 
 \subsection{Option Generation}
-- Indexes: concepts, timelines, significance
-- "I'm hungry" -- find solutions to the problem through association; uses significance to find previous solutions
+- Indexes: concepts, timelines, valence
+- "I'm hungry" -- find solutions to the problem through association; uses valence to find previous solutions
 - Seeking out solutions to current problems is based on using Sensory Valence associated with the specific anticipated problem to identify options for solutions, then simulation to select options and potential paths to the options.
 
 \subsection{Introspection}
