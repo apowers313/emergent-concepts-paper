@@ -331,22 +331,7 @@ Prediction starts with identifying similar Concepts and Contexts. The worst case
 
 Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Contexts under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
 
-\hl{TODO: rewrite using FEP / bayes / probability for the edges}
-
-Each edge carries a Normal-Gamma conjugate prior that is "sculpted" during the use of the edge to determine the probability of the nodes along the edge being a match. After matching the current context, or the concepts of the context if no context exists, prediction uses these edges to determine the most likely transforms that will apply to each concept and predict the next state of each concept in terms of its features and relationships to other concepts. The Normal-Gamma conjugate prior has its typical form:
-
-\begin{itemize}
-    \item $\mathbf{\mu}$, the current best estimate of the feature's value for this concept (the Normal-Gamma mean);
-    \item $\mathbf{\kappa}$, the *effective evidence* behind $\mu$ — its "virtual sample size" — which also sets how much a new observation moves the estimate and how strongly the edge resists being overturned;
-    \item $\mathbf{\alpha}$, the Gamma shape, accumulating evidence about the feature's precision;
-    \item $\mathbf{\beta}$, the Gamma rate, accumulating observed squared deviation, so that $\alpha_{NG}/\beta$ estimates the precision (tightness) of the feature for this concept.
-\end{itemize}
-
-On the n-th consistent observation x, the standard Normal-Gamma updates are
-
-$$\mu' = \frac{\kappa\mu + x}{\kappa + 1}, \qquad \kappa' = \kappa + 1, \qquad \alpha' = \alpha + \tfrac{1}{2}, \qquad \beta' = \beta + \frac{\kappa}{\kappa+1}\cdot\frac{(x - \mu)^2}{2}.$$
-
-See Section \ref{pseudocode:edges} for pseudocode detailing the implementation of Edges.
+After matching the current context, or the concepts of the context if no context exists, prediction uses these edges to determine the most likely transforms that will apply to each concept and predict the next state of each concept in terms of its features and relationships to other concepts. The Normal-Gamma conjugate prior has its typical form:
 
 \begin{figure}[ht]
   \centering
@@ -386,9 +371,106 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
 - Novelty creates new concepts: features, relationships, etc that are not similar to others
 - Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
 
-\subsection{Sculpting}
+\subsection{Sculpting Edges}
+When a concept is successfully matched, the edges that that are used for the match have their probabilities increased information and the edges that were expected but absenthave their probabilities decreased (i.e. the edges are "sculpted"). Note that inheritance relationships are not sculpted and thus aren't described in this section. See Section \ref{sec:abstraction} for more about inheritance.
+
+There are two types of sculpted edges: a PresenceEdge that is used to indicate that the relationship is or isn't present and a ValueEdge that is used to represent both presence and the the probability distribution of a perceptual feature (e.g. the probability distribution of a certain hue or brightness for a color).
+
+The types of relationships that are sculpted are:
+\begin{itemize}
+    \item Concept $\dashrightarrow$ FeatureGroup / ConceptInstance
+    \item FeatureGroup $\rightsquigarrow$ Feature
+    \item (Concept, Context) $\dashrightarrow$ Transform
+    \item Concept $\dashrightarrow$ Context
+    \item Concept $\rightsquigarrow$ ContextRelationship
+    \item source FeatureGroup $\rightsquigarrow$ Transform $\rightsquigarrow$ destination FeatureGroup
+    \item Context $\rightsquigarrow$ Significance
+    \item source Context $\rightsquigarrow$ Action $\rightsquigarrow$ destination Context
+\end{itemize}
+
+Where $\dashrightarrow$ is a PresenceEdge and $\rightsquigarrow$ is a ValueEdge. 
+
+PresenceEdges carry a Beta count of how often the target of the edge was present versus absent when the structure was matched. When an expected edge is present $a$ updates $a' = a+1$, and when an expected edge is absent $b$ is updated $b' = b+1$. The presence probability $a/(a+b)$ is the edge's \emph{criteriality}: how necessary the target is during the matching process. It also provides occlusion and variation robustness: an expected-but-absent relationship is not disqualifying, it contributes $1 - a/(a+b)$ to the match. This aids in feature recognition, where a feature may be occluded; and it aids in concept-context relationships where a missing concept will still yield a context that may still have relevant predictions.
+
+ValueEdges extend the functionality of PresenceEdges. In addition to the Beta values on a PresenceEdge, ValueEdges carry a Normal-Gamma conjugate prior that is "sculpted" during the use of the edge to determine the probability of the nodes along the edge being a match. The Normal-Gamma summary takes the form $(\mu, \kappa, \alpha, \beta)$.
+
+\begin{itemize}
+    \item $\mathbf{\mu}$, the current best estimate of the feature's value for this concept (the Normal-Gamma mean);
+    \item $\mathbf{\kappa}$, the *effective evidence* behind $\mu$ — its "virtual sample size" — which also sets how much a new observation moves the estimate and how strongly the edge resists being overturned;
+    \item $\mathbf{\alpha}$, the Gamma shape, accumulating evidence about the feature's precision;
+    \item $\mathbf{\beta}$, the Gamma rate, accumulating observed squared deviation, so that $\alpha_{NG}/\beta$ estimates the precision (tightness) of the feature for this concept.
+\end{itemize}
+
+On the n-th consistent observation x, the standard Normal-Gamma updates are
+
+$$\mu' = \frac{\kappa\mu + x}{\kappa + 1}, \qquad \kappa' = \kappa + 1, \qquad \alpha' = \alpha + \tfrac{1}{2}, \qquad \beta' = \beta + \frac{\kappa}{\kappa+1}\cdot\frac{(x - \mu)^2}{2}.$$
+
+See Section \ref{pseudocode:edges} for pseudocode detailing the implementation of Edges.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+    conc/.style={circle, draw, fill=concept, minimum size=1.5cm, font=\small, align=center, inner sep=1pt},
+    feat/.style={circle, draw, fill=featuregroup, minimum size=1.5cm, font=\small, align=center, inner sep=1pt},
+    chip/.style={rectangle, draw, rounded corners, fill=black!3, align=center, inner sep=5pt, minimum width=3.7cm, font=\footnotesize},
+    icon/.style={rectangle, draw=black!25, rounded corners, fill=white, minimum width=3.9cm, minimum height=1.7cm},
+    cedge/.style={line width=1.4pt, color=conceptedge},
+    pin/.style={-{Stealth[length=5pt]}, thick, color=black!55},
+    edgelbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt},
+    x=1cm, y=1cm
+  ]
+    % --- the two real nodes and the single edge between them ---
+    \node[conc] (c) at (0,0)  {Concept};
+    \node[feat] (f) at (11,0) {Feature};
+    \draw[cedge] (c) -- (f) node[edgelbl, midway, above=1pt] {Concept $\to$ Feature edge};
+    \coordinate (mid) at (5.5,0);
+
+    % --- distribution icons (top of each column) ---
+    % presence icon: skewed Beta, mass near 1 (a criterial, usually-present feature)
+    \node[icon] (pi) at (3.0,-1.55) {};
+    \begin{scope}[shift={(3.0,-1.55)}]
+      \draw[->, black!35] (-1.55,-0.55) -- (1.7,-0.55);
+      \draw[line width=1pt, conceptedge] plot[smooth] coordinates
+        {(-1.5,-0.53) (-0.7,-0.4) (0,-0.12) (0.6,0.34) (1.05,0.58) (1.4,0.05)};
+      \node[font=\tiny, black!55] at (-1.5,-0.78) {0};
+      \node[font=\tiny, black!55] at (1.62,-0.78) {1};
+    \end{scope}
+    % value icon: Gaussian bell centered on mu
+    \node[icon] (vi) at (8.0,-1.55) {};
+    \begin{scope}[shift={(8.0,-1.55)}]
+      \draw[->, black!35] (-1.6,-0.55) -- (1.7,-0.55);
+      \draw[line width=1pt, conceptedge] plot[smooth] coordinates
+        {(-1.4,-0.54) (-0.8,-0.34) (-0.35,0.12) (0,0.56) (0.35,0.12) (0.8,-0.34) (1.4,-0.54)};
+      \draw[black!35] (0,-0.5) -- (0,-0.64) node[font=\tiny, black!55, below, inner sep=1pt] {$\mu$};
+    \end{scope}
+
+    % --- pins from the edge down to each icon ---
+    \draw[pin] (mid) -- (pi.north);
+    \draw[pin] (mid) -- (vi.north);
+
+    % --- text chips (below each icon) ---
+    \node[chip] (pc) at (3.0,-3.6) {\textbf{Presence}\\[1pt] $\mathrm{Beta}(a,b)$\\[2pt] $P(\mathrm{present})=\frac{a}{a+b}$\\[1pt] {\scriptsize $=$ criteriality}};
+    \node[chip] (vc) at (8.0,-3.6) {\textbf{Value}\\[1pt] Normal-Gamma\\[2pt] $(\mu,\kappa,\alpha,\beta)$\\[1pt] {\scriptsize predictive: Student-$t$}};
+
+    % --- multiply symbol between the two chips ---
+    \node[font=\LARGE] at (5.5,-3.6) {$\times$};
+
+    % --- combined likelihood (bottom) ---
+    \node[rectangle, draw, rounded corners, fill=black!3, align=center, inner sep=7pt, minimum width=10.4cm, font=\small]
+      (comb) at (5.5,-5.75)
+      {match likelihood:\; $L \;=\; \dfrac{a}{a+b}\;\times\;\text{Student-}t\!\left(x \mid \mu,\kappa,\alpha,\beta\right)$\\[4pt]
+       {\footnotesize expected but absent (occluded):\; $L = 1 - \dfrac{a}{a+b}$}};
+    \draw[pin] (pc.south) -- (comb.north -| pc.south);
+    \draw[pin] (vc.south) -- (comb.north -| vc.south);
+  \end{tikzpicture}
+  \caption{Anatomy of a ValueEdge. Every ValueEdge stores two conjugate summaries, sculpted independently: a \emph{presence} distribution (Beta counts, whose mean $a/(a+b)$ is the feature's \emph{criteriality}) and a \emph{value} distribution (Normal-Gamma). Matching multiplies the two into a single match likelihood; an expected-but-absent feature contributes $1-a/(a+b)$ rather than disqualifying the match.}
+  \label{fig:edge-anatomy}
+\end{figure}
 
 \subsection{Reification}
+- Uses strength of PresenceEdges (i.e. probability ~1) to create new parent Concepts
+- additive reification leads to mereology relationships: features that regularly occur on the same concept, in the same relationship, and have the same transforms are part of the same Concept (e.g. fingers are part of hand because they move with the hand, have consistent relationships to the hand, and move when the hand moves so they have the same transforms).
+- subtractive reification \hl{TODO}
 
 \subsection{Sensory Valence}
 - Sensory valence (reward and punishment) signals (hunger, pain, pleasure, etc.) are not binary, but are continuous (degree of hunger, degree of pain, degree of pleasure, etc.). The signal is negative for situations to be avoided.
@@ -396,6 +478,7 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
 - They may also be immediately available during recall to identify near-term objects or actions to steer towards or away from.
 - Sensory valence acts as an amplification signal for concept and context acquisition, ensuring that high valence scenarios are available for recall to guide attraction or avoidance in action selection.
 - Valence also acts as a multiplier on the novelty threshold: high-stakes prediction failures spawn new structure sooner than low-stakes ones.
+
 
 \begin{figure}[ht]
   \centering
@@ -500,8 +583,9 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
 
 \citep{ryan_frankland_2022, underwood_1957, oleary_natural_2024, bjork_bjork_1992}
 
-\subsection{Concept Abstraction, Hoisting, Inheritance}
+\subsection{Concept Abstraction, Hoisting, Inheritance}\label{sec:abstraction}
 - Frequently co-occurring and predictive features, relationships, and transforms are abstracted out to become new concepts. This is an economic savings for three reasons: 1) rather than holding on to a large amount of detail, only the necessary detail for the high-confidence predictions needs to be retained; 2) relationships can be formed and predictions can happen at higher levels, enabling faster predictions; 3) the newly extracted / abstracted concepts can be applied to more scenarios and newly encountered scenarios, enabling transference of knowledge / prediction.
+- Co-activation during matching leads to abstraction and is a different mechanism than reification. Reification uses strength of sculpted edges as a grouping mechanism, not co-activation.
 - When a new level of concept is created, it hoists up the common contexts, feature groups, and transforms -- adding them to the new parent concept and removing them from the common concepts.
 - Child concepts inherit the contexts, feature groups, and transforms of their parents -- the common "dog" class of features and behaviors applies to all its children. Individual children can override the inheritance by retaining or adding specific features, contexts, or transforms to their own concepts enabling child-concept specific predictions. For example, "all dogs are generally nice but Fido tries to bite".
 - Transforms can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
