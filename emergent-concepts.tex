@@ -160,6 +160,18 @@ The foundational principles of the architecture are:
 
 We argue that the capacity for one continual unsupervised online learning — acquiring and immediately using new world knowledge from single experiences — does not require scale, supervision, or hand-engineered ontologies, but follows naturally when concepts are allowed to emerge bottom-up as a stratified graph structure built directly from perceptual features and sensory valence signals. We position this as a viable and underexplored alternative to the dominant approaches: large-corpus learning, world models, symbolic knowledge engineering, and prior cognitive architectures.
 
+```
+this paper makes two falsifiable predictions:
+
+**PRIMARY 1 — Generalization/accuracy dissociation (learning is USEFUL).** After single-exposure acquisition, **accuracy on already-seen instances saturates quickly** while **generality to novel same-concept instances keeps rising** over repetitions — the two curves visibly *separate*.
+- *Why it's the fingerprint of the core claim:* the theory's defining assertion is that acquisition and generalization are **separate processes at separate rates**. This signature separates the two processes *in the data* and shows they move independently. Pure-incremental (one mechanism) moves accuracy and generality *together* -> no separation. Pure-one-shot -> both flat after exposure 1. **Only a two-process system shows the separation.** If they rise together, the two-timescale claim is wrong.
+- *Operationalization:* performance on repeated instances (accuracy) vs held-out novel same-concept instances (generality), over exposure count. Requires a domain where "same concept, novel instance" is generable. **Experiment: transfer across multiple gyms** (user) — a transform learned in one gym firing correctly in new gyms exercises this directly.
+
+**PRIMARY 2 — Convergence / "knitting" (learning is STABLE).** The acquisition+sculpting of all four parts (concepts, contexts, transforms, features) must knit to a **stable functional structure, not an unusable mess**. Measurable sub-claim
+**Prediction-error decline:** average precision-weighted error falls and **plateaus**, not oscillates. *Falsifier:* sustained oscillation = the acquire/sculpt loop thrashing (spawn/forget the same structures) = the "unusable mess."
+- *Why co-primary, not a footnote:* it tests a **different axis** than PRIMARY 1 — usefulness vs stability, which fail *independently* (a system can converge to a stable-but-useless model, or generalize transiently while never stabilizing). And unbounded structural churn is the *characteristic* failure a critic would predict of a bold-projection + easy-spawn architecture, so demonstrating convergence directly answers the strongest objection and directly tests closed loop converges; open loop churns.
+```
+
 Not a single new mechanism but a synthesis. \hl{...}
 
 The rest of the paper is organized as follows. \hl{...}
@@ -176,14 +188,14 @@ At the core is creating data structures that can be used for understanding, navi
 
 One of the largest challenges with creating a world representation using data is the cold start problem -- how is the agent productive when little or no initial data is available. Therefore, the sections below are presented in the order of bootstrapping the system, putting aside the optimizations and additional benefits of having access to established concepts.
 
-\subsection{Sensory Input and Feature Extraction}
+\subsection{Sensory Input, Feature Extraction, Saliency}
 This section lays out the basic units for forming concepts. Concepts are initially built from features, bound together at a specific space and time by their co-occurrenced. The mechanisms described in this section are well established both biologically and algorithmically and assumed to be non-controversial; however, the novel contribution is the shape of the data at the end of the feature extraction process that will be used as the basis for formulating and using concepts.
 
-In order for the agent to reduce the data received from the environment to a manageable stream of information, multisensory input is initially broken down into a series of features using modality-specific feature extractors: edges, lines, vertices, colors, gradients, motion, in vision; frequency, harmonicity in the auditory system; edges, points, curvature, vibration in haptics; and so forth. Extracted features may be compounded to create increasingly complex features, such as creating 'T' or 'L' shape feature detectors from a combination of lines detected by the visual system. Each of these becomes a standalone feature -- an atomic node that will be used to create concepts. The modality, quantity, and types of feature extractors is not central to this argument. It is sufficient to say that there are a large number of them and the more that are available, the better the agent will be at creating differentiated concepts. \citep{pashler_attention_2016} \hl{other citations}
+In order for the agent to reduce the data received from the environment to a manageable stream of information, multisensory input is initially broken down into a series of features using modality-specific feature extractors: edges, lines, vertices, colors, gradients, motion, in vision; frequency, harmonicity in the auditory system; edges, points, curvature, vibration in haptics; and so forth. Extracted features may be compounded to create increasingly complex features, such as creating 'T' or 'L' shape feature detectors from a combination of lines detected by the visual system. Each of these becomes a standalone feature -- an atomic node that will be used to create concepts. The modality, quantity, and types of feature extractors is not central to this argument. It is sufficient to say that there are a large number of them and the more that are available, the better the agent will be at creating differentiated concepts. It is also important to note that there are a fixed number of types of concepts: the set of types of features that can be generated by the agent is determined by number and types of feature extractors. \citep{pashler_attention_2016} \hl{other citations}
 
-Each feature is mapped to a specific location in space, relative to the agent. The dimensionality is unimportant, only that features can be colocated at a specific point in time so that they can be bound together. Modality-specific saliency mechanisms \hl{Itti and Koch; Auditory saliency} (such as brightness, loudness, or motion) are used to select candidate feature groups, inhibition of return \hl{citation} is applied to ensure the agent does not become locked to a single salient point to the exclusion of all others, and cross-modal attention selects which features receive bottom-up attention using a winner-take-all mechanism. For the moment, we will put aside other context-specific mechanisms that may modify the selection of feature groups from the environment, such as agentic context that influences the selection of features. The winning features are bound together based on their spatiotemporal locus \citep{Kahneman_Treisman_Gibbs_1992, pylyshyn_role_1989, Wolfe_2021, treisman_binding_1996}  Feature binding, attention and object perception. The result is a sequential stream of feature groups at specific spatiotemporal locations. In our system, this information will be represented as a graph: a Feature Group node, with edges describing the features that create the composition of the features at that point in time.
+Each feature is mapped to a specific location in space, relative to the agent. The dimensionality of the space is unimportant, only that features can be colocated at a specific point in time so that they can be bound together. Modality-specific saliency mechanisms \hl{Itti and Koch; Auditory saliency} (such as brightness, loudness, or motion) are used to select candidate feature groups, inhibition of return \hl{citation} is applied to ensure the agent does not become locked to a single salient point to the exclusion of all others, and cross-modal attention selects which features receive bottom-up attention using a winner-take-all mechanism. For the moment, we will put aside other context-specific mechanisms that may modify the selection of feature groups from the environment, such as agentic context that influences the selection of features. The winning features are bound together based on their spatiotemporal locus to create a FeatureGroup \citep{Kahneman_Treisman_Gibbs_1992, pylyshyn_role_1989, Wolfe_2021, treisman_binding_1996} \hl {TODO citation Feature binding, attention and object perception}. This FeatureGroup plays the role of the physical instance of a Concept, as we will note later. Note that only the features at that location are bound together, meaning that not all features are present in the FeatureGroup. The result of the feature extraction and saliency processes a sequential stream of feature groups at specific spatiotemporal locations. In our system, this information will be represented as a graph: a Feature Group node, with edges describing the features that create the composition of the features at that point in time.
 
-- These "concept instances" are important because a single concept may be present multiple times at the same time. If I am holding three marbles, they all have the same concept / predictive capability, even though there are three distinct objects.
+- These FeatureGroups are important because a single concept may be present multiple times at the same time. If I am holding three marbles, they all have the same concept / predictive capability, even though there are three distinct objects.
 
 \begin{figure}[ht]
   \centering
@@ -201,8 +213,8 @@ Each feature is mapped to a specific location in space, relative to the agent. T
   \label{fig:concept-instance}
 \end{figure}
 
-\subsection{Point in Time Relationships}
-As this stream of feature groups is created, all pairwise relationships are defined within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The relationships between these objects create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
+\subsection{Context: Point in Time Relationships}
+As this stream of feature groups is created, all pairwise relationships are defined within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The collection of relationships between these Concepts at a specific point in time create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
 
 \begin{figure}[ht]
   \centering
@@ -240,9 +252,11 @@ As this stream of feature groups is created, all pairwise relationships are defi
 \end{figure}
 
 \subsection{Episodic Timeline}
-Whereas the Contexts are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Contexts to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. It is a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
+Whereas the Contexts are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Contexts to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. They are the view of the ontology graph that describes what happened (or is happening) in terms of specific instances of concepts and point-in-time changes. It is also a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
 
-This system links Feature Groups across Contexts, identifying the same or similar feature groups in successive Contexts. This similarity is aided by feature extractors that detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each Feature group that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group changed at different points in time. These transforms and concepts are used later for prediction and simulation.
+This system links Feature Groups across Contexts, identifying the same or similar feature groups in successive Contexts. This similarity is aided by feature extractors that detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each FeatureGroup that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group or Relationship Group changed at different points in time. 
+
+The content of Transforms corresponds to the types of features generated by the feature extractors and the types of relationships between objects. Each Transform carries one or more Features (e.g. color, lines, intersections, gradient size) or Relationships (e.g. distance, orientation) that has changed between successive steps. Only changes are recorded in the transform and they are encoded as differences between values or states. For an example of a red hue from 100 to 150 would be ncoded as "red: +50" in the transform. This enables transforms to be applied in future scenarios as a prediction of what will happen -- the same Concept in the same Context would be expected to add +50 to its red hue. See Section \ref{pseudocode:transforms} for a more detailed specification of the content of Transforms.
 
 \begin{figure}[ht]
   \centering
@@ -326,63 +340,16 @@ This system links Feature Groups across Contexts, identifying the same or simila
   \label{fig:episodic-timeline}
 \end{figure}
 
-\subsection{Prediction}
-Prediction starts with identifying similar Concepts and Contexts. The worst case scenario is the agent being presented an environment with no prior context. In this scenario Concepts are identified starting with saliency mechanisms selecting a Feature Group and then matching the Feature Group to a Concept based on spreading activation of features in Feature Groups -- whichever Concept has the most features in common with the saliency selected feature group is the most likely matching concept. This happens iteratively as saliency shifts attention around the environment. As Concepts are identified in the current environment, their relationships start to come into play, using Contexts associated with the Feature Groups of the concept to identify Feature Groups that have co-occurred in previous experience. Finally, as time moves forward and motion and change comes into play, the Transformations between Feature Groups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Contexts alone was low.
-
-Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Contexts under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
-
-After matching the current context, or the concepts of the context if no context exists, prediction uses these edges to determine the most likely transforms that will apply to each concept and predict the next state of each concept in terms of its features and relationships to other concepts. The Normal-Gamma conjugate prior has its typical form:
-
-\begin{figure}[ht]
-  \centering
-  \begin{tikzpicture}[
-    conc/.style={circle, draw, fill=concept, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
-    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
-    cedge/.style={thick, color=conceptedge},
-    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
-    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
-    x=1cm, y=1cm
-  ]
-    \node[conc]  (cpt) at (0,3.2)   {Concept};
-    \node[circ]  (fg1) at (-3,0)    {Feature\\Group};
-    \node[circ]  (fg2) at (3,0)     {Feature\\Group};
-    \node[trans] (t)   at (0,0)     {Transform};
-    \node[rel]   (rg1) at (-3,-3.2) {Context};
-    \node[rel]   (rg2) at (3,-3.2)  {Context};
-
-    % concept linked to its two feature groups (green lines)
-    \draw[cedge] (cpt) -- (fg1);
-    \draw[cedge] (cpt) -- (fg2);
-    % transform between the two feature groups
-    \draw[tedge] (fg1) -- (t);
-    \draw[tedge] (t) -- (fg2);
-    % each feature group relates into its context
-    \draw[assoc] (fg1) -- (rg1);
-    \draw[assoc] (fg2) -- (rg2);
-  \end{tikzpicture}
-  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Context} that each one participated in.}
-  \label{fig:concept-structure}
-\end{figure}
-
-\subsection{Acquisition}
-- At this point we have a stream of information, however it is too much to retain and not all of it is necessary to retain for future purposes
-- Novelty creates new concepts: features, relationships, etc that are not similar to others
-- Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
-
-\subsection{Sculpting Edges}
-When a concept is successfully matched, the edges that that are used for the match have their probabilities increased information and the edges that were expected but absenthave their probabilities decreased (i.e. the edges are "sculpted"). Note that inheritance relationships are not sculpted and thus aren't described in this section. See Section \ref{sec:abstraction} for more about inheritance.
-
-There are two types of sculpted edges: a PresenceEdge that is used to indicate that the relationship is or isn't present and a ValueEdge that is used to represent both presence and the the probability distribution of a perceptual feature (e.g. the probability distribution of a certain hue or brightness for a color).
+\subsection{Probabilistic Edges}
+There are two types of probabilistic edges: a PresenceEdge that is used to indicate that the relationship is or isn't present and a ValueEdge that is used to represent both presence and the the probability distribution of a perceptual feature (e.g. the probability distribution of a certain hue or brightness for a color).
 
 The types of relationships that are sculpted are:
 \begin{itemize}
     \item Concept $\dashrightarrow$ FeatureGroup / ConceptInstance
     \item FeatureGroup $\rightsquigarrow$ Feature
     \item (Concept, Context) $\dashrightarrow$ Transform
-    \item Concept $\dashrightarrow$ Context
     \item Concept $\rightsquigarrow$ ContextRelationship
+    \item ContextRelationship $\dashrightarrow$ Context
     \item source FeatureGroup $\rightsquigarrow$ Transform $\rightsquigarrow$ destination FeatureGroup
     \item Context $\rightsquigarrow$ Significance
     \item source Context $\rightsquigarrow$ Action $\rightsquigarrow$ destination Context
@@ -400,6 +367,25 @@ ValueEdges extend the functionality of PresenceEdges. In addition to the Beta va
     \item $\mathbf{\alpha}$, the Gamma shape, accumulating evidence about the feature's precision;
     \item $\mathbf{\beta}$, the Gamma rate, accumulating observed squared deviation, so that $\alpha_{NG}/\beta$ estimates the precision (tightness) of the feature for this concept.
 \end{itemize}
+
+\subsection{Matching}
+Matching is a synonym for recognition or recall --- it reads the ontology graph and returns the best fitting Concept and / or Context for the information that has been made available by saliency and cross-modal attention. If a match is found for the existing data, it is routed to Sculpting mechanisms (see Section \ref{sec:sculpting}) to further refine the Concept or Context for future use; if no match is found a new Concept or Context is Acquired (see Section \ref{sec:acquisition}).
+
+The goal of matching is to match a single Concept to an incoming FeatureGroup. In all scenarios, the matching algorithm uses all the Features in the FeatureGroup and the Relationships to other Concepts to identify a matching concept. The Features in the incoming FeatureGroup act as an inverse index to candidate Concepts and their ValueEdges contribute to the likelihood that any candidate Concept is a match to the FeatureGroup.
+
+There are two paths for Matching Concepts and Contexts. The fast path and best case scenario is a top-down mechanism that uses Context to identify Concepts that match the FeatureGroup that has recently arrived from saliency mechanisms. In the fast path a Context has already been identified from previous turns of the agent and there is a variant of the Context (same existing Concepts plus one) that contains the Concept that matches that FeatureGroup. This narrows the scope of searching for Concepts that match FeatureGroups down to a small search area of similar Concepts. 
+
+ In the slow path, and worst case scenario, no Context is available or the Concept isn't associated with any similar Context, the agent uses a bottom-up search of spreading activation across all FeatureGroups. This spreading activation uses the probabilistic edges to find high-confidence matches between the incoming FeatureGroup and Concepts, where the highest confidence match will be established as the new Concept. If no high confidence match is found, a new Concept will be acquired. In the bottom-up approach a new Context will be Acquired that includes the Concept and in the new Context.
+
+
+\subsection{Acquisition}\label{sec:acquisition}
+- At this point we have a stream of concepts from saliency and cross-modal attention; however, it is too much to retain and not all of it is necessary to retain for future purposes
+- Novelty creates new concepts: features, relationships, etc that are not similar to others
+
+- Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
+
+\subsection{Sculpting Edges}\label{sec:sculpting}
+When a concept is successfully matched, the edges that that are used for the match have their probabilities increased information and the edges that were expected but absenthave their probabilities decreased (i.e. the edges are "sculpted"). Note that inheritance relationships are not sculpted and thus aren't described in this section. See Section \ref{sec:abstraction} for more about inheritance.
 
 On the n-th consistent observation x, the standard Normal-Gamma updates are
 
@@ -478,7 +464,6 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
 - They may also be immediately available during recall to identify near-term objects or actions to steer towards or away from.
 - Sensory valence acts as an amplification signal for concept and context acquisition, ensuring that high valence scenarios are available for recall to guide attraction or avoidance in action selection.
 - Valence also acts as a multiplier on the novelty threshold: high-stakes prediction failures spawn new structure sooner than low-stakes ones.
-
 
 \begin{figure}[ht]
   \centering
@@ -572,9 +557,6 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
   \label{fig:sensory-valence}
 \end{figure}
 
-\subsection{Conceptual Recall}
-- Concepts are recalled through three mechanisms: 1) temporal relationships from the current context, which is extremely fast 2) bottom-up feature recognition, which is slow but broad; this uses the features (sound frequency, lines, intersections) with spreading activation to identify a concept; 3) contexts -- based on other recognized concepts in the current context, using contexts to identify candidate concepts.
-
 \subsection{Retention / Forgetting}
 - Repetition through recall leads to retention (i.e. reinforcement). Every successful recall sculpts edges to increase their probability of their associated concepts being referenced in the future.
 - Forgetting is the process of reducing the weight of edges through decay (i.e. the effective evidence $\kappa$ and the presence counts decay towards a plasticity floor). Edges are not removed, but lose their priority in recall and / or reduce their confidence. "Forgotten" concepts are hard to reach but not gone and on re-encounter they can be recalled and the edges will quickly increase in confidence to restore its utility.
@@ -606,6 +588,45 @@ Concept Second Layer Abstraction Diagram: \hl{TODO}
 Iterative Abstraction Diagram(s): \hl{TODO}
 
 \subsection{Prediction}
+Prediction starts with matching similar Concepts and Contexts. The worst case scenario is the agent being presented an environment with no prior context. In this scenario Concepts are identified starting with saliency mechanisms selecting a Feature Group and then matching the Feature Group to a Concept based on spreading activation of features in Feature Groups -- whichever Concept has the most features in common with the saliency selected feature group is the most likely matching concept. This happens iteratively as saliency shifts attention around the environment. As Concepts are identified in the current environment, their relationships start to come into play, using Contexts associated with the Feature Groups of the concept to identify Feature Groups that have co-occurred in previous experience. Finally, as time moves forward and motion and change comes into play, the Transformations between Feature Groups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Contexts alone was low.
+
+Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Contexts under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
+
+After matching the current context, or the concepts of the context if no context exists, prediction uses these edges to determine the most likely transforms that will apply to each concept and predict the next state of each concept in terms of its features and relationships to other concepts. The Normal-Gamma conjugate prior has its typical form:
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+    conc/.style={circle, draw, fill=concept, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
+    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
+    cedge/.style={thick, color=conceptedge},
+    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
+    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
+    x=1cm, y=1cm
+  ]
+    \node[conc]  (cpt) at (0,3.2)   {Concept};
+    \node[circ]  (fg1) at (-3,0)    {Feature\\Group};
+    \node[circ]  (fg2) at (3,0)     {Feature\\Group};
+    \node[trans] (t)   at (0,0)     {Transform};
+    \node[rel]   (rg1) at (-3,-3.2) {Context};
+    \node[rel]   (rg2) at (3,-3.2)  {Context};
+
+    % concept linked to its two feature groups (green lines)
+    \draw[cedge] (cpt) -- (fg1);
+    \draw[cedge] (cpt) -- (fg2);
+    % transform between the two feature groups
+    \draw[tedge] (fg1) -- (t);
+    \draw[tedge] (t) -- (fg2);
+    % each feature group relates into its context
+    \draw[assoc] (fg1) -- (rg1);
+    \draw[assoc] (fg2) -- (rg2);
+  \end{tikzpicture}
+  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Context} that each one participated in.}
+  \label{fig:concept-structure}
+\end{figure}
+
 - The agent is able to predict what will happen next based on the concept instances that are present. Each concept instance, with enough previous experience, has its own predicted behavior and predicted behavior in the presence of other known concepts. 
 - Since the agent can predict the currently present objects, it can predict how its own actions will influence them.
 - Successful prediction leads to reinforcement / additional weighting of the concepts used in the prediction.
@@ -647,6 +668,27 @@ Iterative Abstraction Diagram(s): \hl{TODO}
 \subsection{Contexts}\label{pseudocode:contexts}
 
 \subsection{Transforms}\label{pseudocode:transforms}
+\begin{minted}{python}
+class Transform:
+    # the detected change between to Features or Relationships
+    source: FeatureGroup
+    destination: FeatureGroup
+
+    transforms: set[Delta]
+
+class Delta:
+    type: TransformType
+    value: any
+
+class TransformType(Enum):
+    # an enumeration of the different types of transforms
+    # this list is directly corresponding to the feature extractors
+    # and the relationships that can be identified between concepts
+    LOCATION = 1
+    COLOR = 2
+    DISTANCE = 3
+    # ...
+\end{minted}
 
 \subsection{Edges}\label{pseudocode:edges}
 \begin{minted}{python}
@@ -711,7 +753,6 @@ class Edge:
         self.beta = self.beta + (k / (k + 1)) * (val - mu_old)^2 / 2
         self.kappa = k + 1
         edge.alpha = self.alpha + 0.5
-        
 \end{minted}
 
 \subsection{Saliency}\label{pseudocode:saliency}
@@ -743,14 +784,14 @@ def main():
 
     # --- 3. resolve previous prediction
 
-    # --- 5. identify concepts
+    # --- 4. identify concepts
     concepts = identify_concepts(prev_context, feature_groups)
 
-    # --- 6. identify context
+    # --- 5. identify context
 
-    # --- 7. predict
+    # --- 6. predict
 
-    # --- 8. take action
+    # --- 7. take action
 \end{minted}
 
 \section{Sufficiency Tests}
@@ -761,8 +802,10 @@ def main():
 \subsection{There's a bear in my kitchen}
 - The agent enters the kitchen in a house -- a familiar scenario. There is a bear in the kitchen. The agent is able to recognize the bear without having encountered a bear in the kitchen before. 
 - This is a demonstration of bottom-up recognition with incongruent context.
+
 \subsection{Social Transfer}
 - \hl{TODO}
+
 \subsection{Emotion}
 - \hl{TODO}
 
@@ -774,6 +817,7 @@ def main():
 	4. Learn through social transfer that there are different "authority figures", such as kings and presidents
 	5. Learn that "kings" can be cruel and arbitrary and that fairness / equity / predictability is a desirable outcome
 	6. Learn that people can vote to create equitable rules for the masses and that this is called "democracy"
+    
 \subsection{Language}
 - Language is sounds and symbols tied to concepts, it has no special mechanisms.
 - Sentence structure and grammar is learned by patterns.
