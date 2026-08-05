@@ -368,21 +368,60 @@ ValueEdges extend the functionality of PresenceEdges. In addition to the Beta va
     \item $\mathbf{\beta}$, the Gamma rate, accumulating observed squared deviation, so that $\alpha_{NG}/\beta$ estimates the precision (tightness) of the feature for this concept.
 \end{itemize}
 
-\subsection{Matching}
-Matching is a synonym for recognition or recall --- it reads the ontology graph and returns the best fitting Concept and / or Context for the information that has been made available by saliency and cross-modal attention. If a match is found for the existing data, it is routed to Sculpting mechanisms (see Section \ref{sec:sculpting}) to further refine the Concept or Context for future use; if no match is found a new Concept or Context is Acquired (see Section \ref{sec:acquisition}).
+\subsection{Concept Matching \& Acquisition}\label{sec:matching}
+Matching is a synonym for recognition or recall --- it reads the ontology graph and returns the best fitting Concept and / or Context for the information that has been made available by saliency and cross-modal attention. The goal of matching is to match an incoming FeatureGroup to a single Concept. In order to create and maintain a structure that accurately represents the world, any FeatureGroup that is not matched is Acquired (see Section \ref{sec:acquisition}) as a new Concept, which makes Matching and Acquisition two halves of the same process. Where a match is found between a FeatureGroup and an existing Concept, it is routed to Sculpting mechanisms (see Section \ref{sec:sculpting}) to further refine the Concept or Context for future use. The matching process that leads to either Acquisition or Sculpting is a single comparison using the mechanism described below.
 
-The goal of matching is to match a single Concept to an incoming FeatureGroup. In all scenarios, the matching algorithm uses all the Features in the FeatureGroup and the Relationships to other Concepts to identify a matching concept. The Features in the incoming FeatureGroup act as an inverse index to candidate Concepts and their ValueEdges contribute to the likelihood that any candidate Concept is a match to the FeatureGroup.
+The matching algorithm uses all the Features in the FeatureGroup and the Relationships to other Concepts to identify a matching concept. The Features in the incoming FeatureGroup act as an inverse index to candidate Concepts each candidate Concept is scored by how well the probabilistic edges describe the Concept versus a reserved probabilistic mass for a new Concept that would be acquired. The reserved mass for acquiring a new Concept is based on $q_f$, the global appearance rates of new features which is stored on each Feature; and $g_{0,f}(x) = \frac{1}{\mathrm{hi}_f - \mathrm{lo}_f}$, the normalized value of the feature such that the maximum entropy of the feature falls within the range $[0,1]$, such that existing Concepts are competing to see if they describe the incoming FeatureGroup better than the background rate of all Features that have been observed globally.
 
-There are two paths for Matching Concepts and Contexts. The fast path and best case scenario is a top-down mechanism that uses Context to identify Concepts that match the FeatureGroup that has recently arrived from saliency mechanisms. In the fast path a Context has already been identified from previous turns of the agent and there is a variant of the Context (same existing Concepts plus one) that contains the Concept that matches that FeatureGroup. This narrows the scope of searching for Concepts that match FeatureGroups down to a small search area of similar Concepts. 
+As an optimization, there is also a fast-path for assembling a candidate group of Concepts. The fast path is top-down, using the currently active Context to prime the Concepts that it expects to be present.
 
- In the slow path, and worst case scenario, no Context is available or the Concept isn't associated with any similar Context, the agent uses a bottom-up search of spreading activation across all FeatureGroups. This spreading activation uses the probabilistic edges to find high-confidence matches between the incoming FeatureGroup and Concepts, where the highest confidence match will be established as the new Concept. If no high confidence match is found, a new Concept will be acquired. In the bottom-up approach a new Context will be Acquired that includes the Concept and in the new Context.
+Each Feature in the detected FeatureGroup contributes to a candidate Concept's score:
 
+$$
+s_f(C) \;=\;
+\begin{cases}
+\log\dfrac{a/(a+b)}{q_f} \;+\; \log\dfrac{\mathrm{St}\!\left(x_f \mid \mu,\kappa,\alpha,\beta\right)}{g_{0,f}(x_f)} & \text{expected $f$ present with value $x_f$,}\\[10pt]
+\log\dfrac{1 - a/(a+b)}{1 - q_f} & \text{expected $f$ absent,}\\[10pt]
+0 & \text{$f$ unknown to both hypotheses}
+\end{cases}
+$$
 
-\subsection{Acquisition}\label{sec:acquisition}
-- At this point we have a stream of concepts from saliency and cross-modal attention; however, it is too much to retain and not all of it is necessary to retain for future purposes
-- Novelty creates new concepts: features, relationships, etc that are not similar to others
+In the first case, a feature contributes more to a Concept's candidate score based on: the more strongly the Concept $C$ expects the feature than the background rate of the feature in the world (criteriality $a/(a+b)$ against the background rate $q_f$) and the better that the observed value fits the edge's Student-$t$ predictive $\mathrm{St}(\cdot \mid \mu,\kappa,\alpha,\beta)$ than a value drawn from anywhere in the extractor's range.
 
-- Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
+In the second case, $C$ is charged for expecting a feature that is not present, priced against how surprising that absence would be by chance. Because the presence counts in an edge are initialized with $\mathrm{Beta}(1,1)$ the charge is always finite and features missing due to occlusion only degrade a match but never disqualify it.
+
+\hl{TODO: Features are on FeatureGroups, not Concepts}
+
+Note that the $q_f$ denominators also make rare features weigh more than common ones: a feature that is rare in the world but expected by the concept is stronger evidence for $C$ than a more common feature.
+
+Finally, in the third case, if $C$ does not expect $f$ it is not charged for it.
+
+Deciding whether a candidate Concept is a match to the present features is performed by comparing the candidate versus a reserved novelty hypothesis $\nu$ -- a reserved share of probability mass representing a new Concept that is not yet represented in the ontology. $\nu$ is always calculated in parallel with the candidate Concept on the same evidence, with the expectation that features are present at exactly their background rate, accepting any value in the range of the feature, and paying the same charge for expected but missing features.
+
+\hl{TODO: $p_{\mathrm{new}}$}
+
+$$
+C^{*} \;=\; \operatorname*{arg\,max}_{C \,\in\, \mathcal{C} \,\cup\, \{\nu\}} \Big[\, \log \pi_C \;+\; \sum_{f} s_f(C) \,\Big],
+\qquad \pi_\nu = p_{\mathrm{new}},
+$$
+
+where $\mathcal{C}$ is the candidate set and $\pi_C$ is a candidate's prior weight
+the prior weights are normalized so that $\sum_C \pi_C = 1 - p_{\mathrm{new}}$
+A match is declared exactly when some existing Concept outscores $\nu$; a new Concept is acquired exactly when $\nu$ outscores every existing candidate.
+
+Picking up from where the Matching left off, a concept is acquired when the reserved probability mass of a new concept out-performs all existing concepts. That is, no existing structure in the ontology offered a better explanation of the features that were observed than creating a new concept.
+
+The edges of the new Concept are formed by applying one iteration of the standard Sculpting update (Section \ref{sec:sculpting}) to the features that were observed to create the new Concept. For a founding feature observed with value $x$,
+
+$$
+(a, b) = (2, 1), \qquad (\mu, \kappa, \alpha, \beta) = \left(x,\; 1,\; 1,\; \sigma_f^2\right),
+$$
+
+where the presence counts are the innate $\mathrm{Beta}(1,1)$ plus the founding sighting (criteriality $2/3$) and $\sigma_f$ is the extractor's noise floor. This one-shot acquisition primes the concept so that is able to be recalled for future matching and prediction, albeit weakly until it is sculpted and reinforced over time.
+
+The reserved mass $p_{\mathrm{new}}$ is not a constant; it is estimated from the agent's own recent rate of genuine first encounters, in the manner of Good--Turing missing-mass estimation \hl{citation: Good 1953}.
+
+- \hl{TODO} Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
 
 \subsection{Sculpting Edges}\label{sec:sculpting}
 When a concept is successfully matched, the edges that that are used for the match have their probabilities increased information and the edges that were expected but absenthave their probabilities decreased (i.e. the edges are "sculpted"). Note that inheritance relationships are not sculpted and thus aren't described in this section. See Section \ref{sec:abstraction} for more about inheritance.
