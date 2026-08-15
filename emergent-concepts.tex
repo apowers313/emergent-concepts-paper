@@ -64,7 +64,8 @@
 \usepackage{color, soul}    % highlighting during editing
 % figure palette (semantic colors shared by all TikZ diagrams)
 \colorlet{featuregroup}{blue!15}          % Feature Group / Concept Instance fill
-\colorlet{context}{red!15}      % Context fill
+\colorlet{feature}{black!10}              % Feature color
+\colorlet{context}{red!15}                % Context fill
 \colorlet{transform}{yellow!30}           % Transform fill
 \definecolor{transformedge}{HTML}{9900CC} % Transform (dashed) edges
 \colorlet{concept}{green!15}              % Concept fill
@@ -214,7 +215,11 @@ Each feature is mapped to a specific location in space, relative to the agent. T
 \end{figure}
 
 \subsection{Context: Point in Time Relationships}
-As this stream of feature groups is created, all pairwise relationships are defined within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}. These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The collection of relationships between these Concepts at a specific point in time create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
+As this stream of feature groups is created, all pairwise relationships are defined within some window of time along multiple dimensions. For example, depending on the agent, the window of time may be seconds or milliseconds where all the feature groups are connected by relationships of distance, change in distance, orientation, and change in orientation in egocentric and allocentric frames of reference \citep{Hafri_Firestone_2021,vo_reading_2019}.
+
+These relationships are used to construct mereotopological types of concepts (e.g. part of, connected to, separate from) as well as concepts used for reasoning about relationships between disjointed objects (e.g. getting closer, touching). The collection of relationships between these Concepts at a specific point in time create Contexts, which can be used to encode specific points of time in episodic memory -- the set of features that was perceived at a specific point in time and the relation to each other, in such a way that a point in time can be reconstructed (albeit in a lossy manner). This also holds future utility in identifying and reusing instance data -- contexts can be used to identify similar situations that have occurred before.
+
+Note that our definition of the term Context here differs from the everyday usage of the term -- our Contexts are at a much finer grain where every change in the Concepts present or the relationships between them creates an entirely new Context. As foreshadowing to future sections, the reason that Contexts are created when relationships change is that relationships are critical for prediction: the presence of the "fire" Concept in a Context has completely different predictive capabilities based on whether it is far (just a light source), near (a warm heat source), touching (painful sensory valence), below (hotter since heat rises), or above (colder since the heat is rising). Over time, as Abstraction (see Section \ref{sec:abstraction}) creates high-level Concepts such as "stove" and "refrigerator", Concepts may also be abstracted to carry the same meaning as their every-day usage such as "kitchen"; however, that presumes multiple iterations of successful Abstraction for both Concepts and Contexts over long periods of time.
 
 \begin{figure}[ht]
   \centering
@@ -247,11 +252,11 @@ As this stream of feature groups is created, all pairwise relationships are defi
     \draw[agg] (rg) -- (dcr) node[lbl, pos=0.6] {relation type};
   \end{tikzpicture}%
   }
-  \caption{A Context captures the pairwise relationships -- such as distance and change in distance -- between concept instances at a single point in time. Each relation type relates the concept instances it connects. (The features associated with the concept instances have been omitted for clarity.}
+  \caption{A Context captures the pairwise relationships -- such as distance and change in distance -- between concept instances at a single point in time. Each relation type relates the concept instances it connects. (The features associated with the concept instances have been omitted for clarity.)}
   \label{fig:context}
 \end{figure}
 
-\subsection{Episodic Timeline}
+\subsection{Episodic Timeline}\label{sec:episodic-timeline}
 Whereas the Contexts are a point-in-time snapshot of the environment, the Episodic Timeline is a series of relationships between Contexts to create a dynamic, ongoing view of the environment and its changes. The Episodic Timeline and its Transforms are the foundation for one-shot online learning. They are the view of the ontology graph that describes what happened (or is happening) in terms of specific instances of concepts and point-in-time changes. It is also a recording of what has happened so that it can be used in future predictions. This timeline is not created at regular time intervals, but at the cadence that new relationships are created, which is dictated by salience; the relationships are merely before / after, not a specific amount of time before or after.
 
 This system links Feature Groups across Contexts, identifying the same or similar feature groups in successive Contexts. This similarity is aided by feature extractors that detect motion, which reduces the dependence on similarity for tracking feature groups over time \citep{kalal_tracking-learning-detection_2012}. Each FeatureGroup that is determined to be the same across multiple steps in the Episodic Timeline is linked back to a Concept node in the graph. The system also creates transforms between each successive Feature Group, indicating how the Feature Group or Relationship Group changed at different points in time. 
@@ -311,21 +316,24 @@ The content of Transforms corresponds to the types of features generated by the 
     \draw[epi] (rg3) -- (rg4) node[lbl, pos=0.5] {episodic};
     \draw[epi] (rg4) -- (ea);
 
-    % relation edges: each Feature Group relates into its Context
-    \draw[assoc] (fg1)  -- (rg1) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg2)  -- (rg1) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg3)  -- (rg1) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg4)  -- (rg2) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg5)  -- (rg2) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg6)  -- (rg2) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg7)  -- (rg2) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg8)  -- (rg3) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg9)  -- (rg3) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg10) -- (rg3) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg11) -- (rg3) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg12) -- (rg3) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg13) -- (rg4) node[lbl, pos=0.28] {relation};
-    \draw[assoc] (fg14) -- (rg4) node[lbl, pos=0.28] {relation};
+    % relation edges: each Feature Group relates into its Context.
+    % Abbreviated -- these stand for the ContextRelationship nodes that the
+    % Context aggregates, drawn in full in fig:context. Labels removed; the
+    % caption carries the statement.
+    \draw[assoc] (fg1)  -- (rg1);
+    \draw[assoc] (fg2)  -- (rg1);
+    \draw[assoc] (fg3)  -- (rg1);
+    \draw[assoc] (fg4)  -- (rg2);
+    \draw[assoc] (fg5)  -- (rg2);
+    \draw[assoc] (fg6)  -- (rg2);
+    \draw[assoc] (fg7)  -- (rg2);
+    \draw[assoc] (fg8)  -- (rg3);
+    \draw[assoc] (fg9)  -- (rg3);
+    \draw[assoc] (fg10) -- (rg3);
+    \draw[assoc] (fg11) -- (rg3);
+    \draw[assoc] (fg12) -- (rg3);
+    \draw[assoc] (fg13) -- (rg4);
+    \draw[assoc] (fg14) -- (rg4);
 
     % transform edges: earlier Feature Group -> Transform -> later Feature Group
     \draw[tedge] (fg1)  -- (t1);  \draw[tedge] (t1) -- (fg5);
@@ -336,7 +344,7 @@ The content of Transforms corresponds to the types of features generated by the 
     \draw[tedge] (fg11) -- (t6);  \draw[tedge] (t6) -- (fg13);
   \end{tikzpicture}%
   }
-  \caption{The Episodic Timeline links successive Contexts -- the point-in-time snapshots of Figure~\ref{fig:context} -- with before/after \emph{episodic} edges, forming an ongoing record of the environment. Each Context relates the Feature Groups present at that point in time, and each \emph{Transform} captures how a Feature Group changes between one point in time and a later one. (The ``before'' and ``after'' ellipses indicate that the timeline extends indefinitely in both directions.)}
+  \caption{The Episodic Timeline links successive Contexts -- the point-in-time snapshots of Figure~\ref{fig:context} -- with before/after \emph{episodic} edges, forming an ongoing record of the environment. Each Context relates the Feature Groups present at that point in time, and each \emph{Transform} captures how a Feature Group changes between one point in time and a later one. The edges running from each Feature Group up to its Context are drawn in abbreviated form: a Feature Group has no edge to a Context, but rather edges to the \emph{ContextRelationship} nodes -- one for every pair of Feature Groups, for every relation type -- which the Context in turn aggregates, as Figure~\ref{fig:context} draws in full. Those nodes are omitted here for legibility. (The ``before'' and ``after'' ellipses indicate that the timeline extends indefinitely in both directions.)}
   \label{fig:episodic-timeline}
 \end{figure}
 
@@ -363,53 +371,67 @@ ValueEdges extend the functionality of PresenceEdges. In addition to the Beta va
 
 \begin{itemize}
     \item $\mathbf{\mu}$, the current best estimate of the feature's value for this concept (the Normal-Gamma mean);
-    \item $\mathbf{\kappa}$, the *effective evidence* behind $\mu$ — its "virtual sample size" — which also sets how much a new observation moves the estimate and how strongly the edge resists being overturned;
+    \item $\mathbf{\kappa}$, the *effective evidence* behind $\mu$ — its "virtual sample size" — which also sets how much a new observation moves the estimate and how strongly the edge resists being overturned
     \item $\mathbf{\alpha}$, the Gamma shape, accumulating evidence about the feature's precision;
     \item $\mathbf{\beta}$, the Gamma rate, accumulating observed squared deviation, so that $\alpha_{NG}/\beta$ estimates the precision (tightness) of the feature for this concept.
 \end{itemize}
 
 \subsection{Concept Matching \& Acquisition}\label{sec:matching}
-Matching is a synonym for recognition or recall --- it reads the ontology graph and returns the best fitting Concept and / or Context for the information that has been made available by saliency and cross-modal attention. The goal of matching is to match an incoming FeatureGroup to a single Concept. In order to create and maintain a structure that accurately represents the world, any FeatureGroup that is not matched is Acquired (see Section \ref{sec:acquisition}) as a new Concept, which makes Matching and Acquisition two halves of the same process. Where a match is found between a FeatureGroup and an existing Concept, it is routed to Sculpting mechanisms (see Section \ref{sec:sculpting}) to further refine the Concept or Context for future use. The matching process that leads to either Acquisition or Sculpting is a single comparison using the mechanism described below.
+Matching is a synonym for recognition and recall --- after receiving the FeatureGroup from saliency and cross-modal attention mechanisms, matching reads the ontology graph and to find the best fitting Concept and / or Context. In order to create and maintain a structure that accurately represents the world, any FeatureGroup that is not matched is Acquired as a new Concept, which makes Matching and Acquisition two halves of the same process. Where a match is found between a FeatureGroup and an existing Concept, it is routed to Sculpting mechanisms (see Section \ref{sec:sculpting}) to further refine the edges of the Concept or Context for future use. The matching process that leads to either Acquisition or Sculpting is a single comparison using the mechanism described below.
 
-The matching algorithm uses all the Features in the FeatureGroup and the Relationships to other Concepts to identify a matching concept. The Features in the incoming FeatureGroup act as an inverse index to candidate Concepts each candidate Concept is scored by how well the probabilistic edges describe the Concept versus a reserved probabilistic mass for a new Concept that would be acquired. The reserved mass for acquiring a new Concept is based on $q_f$, the global appearance rates of new features which is stored on each Feature; and $g_{0,f}(x) = \frac{1}{\mathrm{hi}_f - \mathrm{lo}_f}$, the normalized value of the feature such that the maximum entropy of the feature falls within the range $[0,1]$, such that existing Concepts are competing to see if they describe the incoming FeatureGroup better than the background rate of all Features that have been observed globally.
+\paragraph{Candidate Concepts}
+The Features in the incoming FeatureGroup act as an inverse index to create a set of candidate Concepts to be evaluated as a potential match for the FeatureGroup -- each Feature in the incoming FeatureGroup also has edges that link to the FeatureGroups associated with Concepts. While this may seem like a large set, the calculation is highly parallelize-able and optimizations can be taken to terminate early based on whether concepts being evaluated can reasonably beat candidates at the top of the list. \hl{TODO: how would this calculation work}. As an additional optimization, there is also a fast-path for assembling a candidate group of Concepts. The fast path is top-down, using the currently active Context to prime the Concepts that it expects to be present.
 
-As an optimization, there is also a fast-path for assembling a candidate group of Concepts. The fast path is top-down, using the currently active Context to prime the Concepts that it expects to be present.
+\paragraph{Existing Concepts versus New Concepts}
+The intuitive way to score each candidate Concept would be to create a distance function that compares each candidate Concept to the incoming FeatureGroup and the candidate with the lowest distance (e.g. most features and values in common between the candidate Concept and the target FeatureGroup) would win that match; however, this leads to wrong matches in cold-start scenarios where few Concepts are available and even Concepts with very little overlap with the FeatueGroup would incorrectly be the best match. This might be solved by having a minimum threshold required for how many Features must match between a candidate Concept and the target FeatureGroup; however, that threshold would end up being world and Context specific and ultimately be the source of high error rates \hl{TODO: we need to make this argument more compelling}. That threshold can be avoided if instead a hypothesis of "this is a Concept that doesn't yet exist in the ontology" is created and competes with candidate Concepts. That novelty hypothesis must have two things: 1) an account of what it expects to observe, so that it can be scored on evidence like any candidate Concept; and 2) a prior probability that it applies at all.
 
-Each Feature in the detected FeatureGroup contributes to a candidate Concept's score:
+To the first point of what a novelty hypothesis expects to observe -- it expects nothing out of the ordinary. That is, it expects each feature type to be present at the same rate that they appear in the world, and the values of the feature can be any value. To be more precise, there are two background quantities: the quantity of feature types, $q_f$, is the background presence rate of feature type $f$: the fraction of bound FeatureGroups in which $f$ appears at all. It is a Beta counter carried on the Feature node itself, updated every time a FeatureGroup is created. It is created with the value $\mathrm{Beta}(1,1)$, so an agent with no experience begins at $q_f = 1/2$ --- \hl{TODO: is this right?} a coin flip as to whether the feature is present at or not. The second background quantity for a new Concept, $g_{0,f}$, is the base density over values: uniform across the extractor's calibrated output range, $g_{0,f}(x) = 1/(\mathrm{hi}_f - \mathrm{lo}_f)$, the maximum-entropy density on a bounded interval and \hl{TODO} hence the flat value prior a newly acquired structure has before any observation constrains it. Unlike $q_f$, $g_{0,f}$ is never updated and is just the static calibrated output range for each feature extractor.
+
+The second point is that a novelty hypothesis needs a prior probability for determining whether a new concept should be created. For this we use the Good--Turing \cite{good_population_1953} approach, which uses the number of singular observations, $N_1$, as the prior for finding a never before observed observation. The this gives us the standard form for the probability of a new Concept as:
+
+$$p_{\mathrm{new}} \;=\; \frac{N_1 + 1}{n + 2}$$
+
+where $N_1$ is the decayed total of FeatureGroups that have only been observed once, and $n$ is the decayed total of attendance events. The equation includes Laplace smoothing to keep the values between 0 and 1 at the extreme cases of no observations and all observations are unique to prevent locking on no new Concepts or all new concepts, respectively. Note that one encounter is counted as the total the life of a FeatureGroup as it is tracked across ticks; otherwise, each FeatureGroup would be counted as a second occurrence on the second tick and it would be removed from $N_1$, meaning that there would never be any unique observations beyond a single tick. This approach also puts pressure on the accuracy of tracking -- if tracking loses and re-acquires a novel concept, it now counts as "twice" and gets dropped from Good--Turing's $N_1$. Both $N_1$ and $n$ are subject to a decay factor, $\rho$, which defines the sliding recency window for the frequency of new concepts. The decay factor is:
+
+$\tilde{n}_{\max} = 1/(1-\rho)$
+
+$$\tilde{a}_C \longleftarrow \rho\,\tilde{a}_C + \mathbf{1}[C \text{ attended}]\, \qquad \tilde{a}_C \geq 1$$
+
+\hl{TODO: decay}
+
+\paragraph{Concept Scoring}
+Based on the specification of novelty hypothesis's in the previous section, it can now compete directly with the candidate Concepts. Because novelty hypothesis describes an unremarkable observation, it is also the natural reference against which remarkable ones are measured. So rather than asking how probable an observation is under a candidate --- a quantity with no interpretable scale --- we ask how much \emph{better} the candidate explains it than the background does. Each feature type contributes one additive term, in log units, to the score of a candidate FeatureGroup $F$, and evidence accumulates by summation:
 
 $$
-s_f(C) \;=\;
+s_f(F) \;=\;
 \begin{cases}
-\log\dfrac{a/(a+b)}{q_f} \;+\; \log\dfrac{\mathrm{St}\!\left(x_f \mid \mu,\kappa,\alpha,\beta\right)}{g_{0,f}(x_f)} & \text{expected $f$ present with value $x_f$,}\\[10pt]
-\log\dfrac{1 - a/(a+b)}{1 - q_f} & \text{expected $f$ absent,}\\[10pt]
-0 & \text{$f$ unknown to both hypotheses}
+\log\dfrac{a/(a+b)}{q_f} \;+\; \log\dfrac{\mathrm{St}\!\left(x_f \mid \mu,\kappa,\alpha,\beta\right)}{g_{0,f}(x_f)} & \text{$f$ expected and present with value $x_f$,}\\[10pt]
+\log\dfrac{1 - a/(a+b)}{1 - q_f} & \text{$f$ expected and absent,}\\[10pt]
+0 & \text{no edge for $f$,}
 \end{cases}
 $$
 
-In the first case, a feature contributes more to a Concept's candidate score based on: the more strongly the Concept $C$ expects the feature than the background rate of the feature in the world (criteriality $a/(a+b)$ against the background rate $q_f$) and the better that the observed value fits the edge's Student-$t$ predictive $\mathrm{St}(\cdot \mid \mu,\kappa,\alpha,\beta)$ than a value drawn from anywhere in the extractor's range.
+In the first case, we separate \emph{confirmation} from \emph{information}: a feature contributes more to a Concept's candidate score based on: the more strongly the Concept $C$ expects the feature than the background rate of the feature in the world (criteriality $a/(a+b)$ against the background rate $q_f$). Dividing the edge's Student-$t$ predictive by the flat base density means a candidate earns nothing merely for being precise, only for being precise \emph{and right}, while a vague prediction correctly earns near zero whether it is confirmed or not. The better that the observed value fits the edge's Student-$t$ predictive $\mathrm{St}(\cdot \mid \mu,\kappa,\alpha,\beta)$ than a value drawn from anywhere in the extractor's range.
 
 In the second case, $C$ is charged for expecting a feature that is not present, priced against how surprising that absence would be by chance. Because the presence counts in an edge are initialized with $\mathrm{Beta}(1,1)$ the charge is always finite and features missing due to occlusion only degrade a match but never disqualify it.
 
-\hl{TODO: Features are on FeatureGroups, not Concepts}
-
 Note that the $q_f$ denominators also make rare features weigh more than common ones: a feature that is rare in the world but expected by the concept is stronger evidence for $C$ than a more common feature.
 
-Finally, in the third case, if $C$ does not expect $f$ it is not charged for it.
+Finally, in the third case, the feature is contribution is identical for both the Concept and the novelty hypothesis, causing $q_f$ and $g_{0,f}$ to cancel out.
 
 Deciding whether a candidate Concept is a match to the present features is performed by comparing the candidate versus a reserved novelty hypothesis $\nu$ -- a reserved share of probability mass representing a new Concept that is not yet represented in the ontology. $\nu$ is always calculated in parallel with the candidate Concept on the same evidence, with the expectation that features are present at exactly their background rate, accepting any value in the range of the feature, and paying the same charge for expected but missing features.
-
-\hl{TODO: $p_{\mathrm{new}}$}
 
 $$
 C^{*} \;=\; \operatorname*{arg\,max}_{C \,\in\, \mathcal{C} \,\cup\, \{\nu\}} \Big[\, \log \pi_C \;+\; \sum_{f} s_f(C) \,\Big],
 \qquad \pi_\nu = p_{\mathrm{new}},
 $$
 
-where $\mathcal{C}$ is the candidate set and $\pi_C$ is a candidate's prior weight
-the prior weights are normalized so that $\sum_C \pi_C = 1 - p_{\mathrm{new}}$
-A match is declared exactly when some existing Concept outscores $\nu$; a new Concept is acquired exactly when $\nu$ outscores every existing candidate.
+where $\mathcal{C}$ is the candidate set and $\pi_C$ is a candidate's prior weight the prior weights are normalized so that $\sum_C \pi_C = 1 - p_{\mathrm{new}}$. A match is declared exactly when some existing Concept outscores $\nu$ and a new Concept is acquired exactly when $\nu$ outscores every existing candidate.
 
-Picking up from where the Matching left off, a concept is acquired when the reserved probability mass of a new concept out-performs all existing concepts. That is, no existing structure in the ontology offered a better explanation of the features that were observed than creating a new concept.
+Note that while a single Concept (new or existing) wins the match, the runner-ups are not discarded. They are used by the Prediction Monitors (Section \ref{sec:prediction}) as fall-backs for if prediction fails and as candidates for Abstraction (Section \ref{sec:abstraction}).
+
+\paragraph{Acquisition}
+A concept is acquired when the novelty hypothesis wins the matching competition. That is, no existing structure in the ontology offered a better explanation of the features that were observed than creating a new concept.
 
 The edges of the new Concept are formed by applying one iteration of the standard Sculpting update (Section \ref{sec:sculpting}) to the features that were observed to create the new Concept. For a founding feature observed with value $x$,
 
@@ -423,6 +445,13 @@ The reserved mass $p_{\mathrm{new}}$ is not a constant; it is estimated from the
 
 - \hl{TODO} Concepts are the locus of predictability and transferability. They have relationships to all their (retained) concept instances, the relationships that were present in those instances, and the transforms that occurred in those instances. This enables them to identify similar circumstances based on the other concepts present and apply the same transforms under those conditions to predict or simulate what will happen in future situations.
 
+It should be noted that matching and acquisition do not need to be perfect. If the wrong Concept or Context is selected by matching, downstream Prediction Monitors (Section \ref{sec:prediction}) will identify that the Concept and Context are not correctly forecasting accurately and trigger a process to re-identify concepts. Likewise, for acquisition -- if the wrong Concepts or Contexts are acquired, they will be abstracted to their correct counterparts or their edges will eventually be Sculpted to the point where they are unreachable and forgotten.
+
+\subsection{Context Matching \& Acquisition}
+- Uses a similar process to Concept Matching \& Acquisition
+- Matches based on FeatureGroups and Relationships. Note that all Concepts AND their Relationships must exactly match, which is critical for Prediction
+- New Contexts are acquired when no exactly matching Context exists
+
 \subsection{Sculpting Edges}\label{sec:sculpting}
 When a concept is successfully matched, the edges that that are used for the match have their probabilities increased information and the edges that were expected but absenthave their probabilities decreased (i.e. the edges are "sculpted"). Note that inheritance relationships are not sculpted and thus aren't described in this section. See Section \ref{sec:abstraction} for more about inheritance.
 
@@ -435,8 +464,8 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}[
-    conc/.style={circle, draw, fill=concept, minimum size=1.5cm, font=\small, align=center, inner sep=1pt},
-    feat/.style={circle, draw, fill=featuregroup, minimum size=1.5cm, font=\small, align=center, inner sep=1pt},
+    fgrp/.style={circle, draw, fill=featuregroup, minimum size=1.5cm, font=\small, align=center, inner sep=1pt},
+    feat/.style={circle, draw, fill=feature, minimum size=1.5cm, font=\small, align=center, inner sep=1pt},
     chip/.style={rectangle, draw, rounded corners, fill=black!3, align=center, inner sep=5pt, minimum width=3.7cm, font=\footnotesize},
     icon/.style={rectangle, draw=black!25, rounded corners, fill=white, minimum width=3.9cm, minimum height=1.7cm},
     cedge/.style={line width=1.4pt, color=conceptedge},
@@ -445,9 +474,9 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
     x=1cm, y=1cm
   ]
     % --- the two real nodes and the single edge between them ---
-    \node[conc] (c) at (0,0)  {Concept};
+    \node[fgrp] (c) at (0,0)  {Feature\\Group};
     \node[feat] (f) at (11,0) {Feature};
-    \draw[cedge] (c) -- (f) node[edgelbl, midway, above=1pt] {Concept $\to$ Feature edge};
+    \draw[cedge] (c) -- (f) node[edgelbl, midway, above=1pt] {FeatureGroup $\to$ Feature edge};
     \coordinate (mid) at (5.5,0);
 
     % --- distribution icons (top of each column) ---
@@ -488,14 +517,111 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
     \draw[pin] (pc.south) -- (comb.north -| pc.south);
     \draw[pin] (vc.south) -- (comb.north -| vc.south);
   \end{tikzpicture}
-  \caption{Anatomy of a ValueEdge. Every ValueEdge stores two conjugate summaries, sculpted independently: a \emph{presence} distribution (Beta counts, whose mean $a/(a+b)$ is the feature's \emph{criteriality}) and a \emph{value} distribution (Normal-Gamma). Matching multiplies the two into a single match likelihood; an expected-but-absent feature contributes $1-a/(a+b)$ rather than disqualifying the match.}
+  \caption{Anatomy of a ValueEdge: the edge from a Feature Group to one of its Features, which is the unit the matching score sums over. Every ValueEdge stores two conjugate summaries, sculpted independently: a \emph{presence} distribution (Beta counts, whose mean $a/(a+b)$ is the feature's \emph{criteriality}) and a \emph{value} distribution (Normal-Gamma). Matching multiplies the two into a single match likelihood; an expected-but-absent feature contributes $1-a/(a+b)$ rather than disqualifying the match. Features attach to Feature Groups, never to Concepts; a Concept reaches its Features only through the Feature Groups it holds.}
   \label{fig:edge-anatomy}
 \end{figure}
 
+\paragraph{Retention / Forgetting}
+- Repetition through recall leads to retention (i.e. reinforcement). Every successful recall sculpts edges to increase their probability of their associated concepts being referenced in the future.
+- Forgetting is the process of reducing the weight of edges through decay (i.e. the effective evidence $\kappa$ and the presence counts decay towards a plasticity floor). Edges are not removed, but lose their priority in recall and / or reduce their confidence. "Forgotten" concepts are hard to reach but not gone and on re-encounter they can be recalled and the edges will quickly increase in confidence to restore its utility.
+- Forgetting is essential to the plasticity of the agent -- de-prioritizing old information allows new information to be utilized in the correct context. For example, if an object is moved the agent must be able to reduce the probability of the old location and increase the probability of the new location so that it can be recalled in the correct context.
+- Explains both aspects of forgetting due to interference: retroactive interference occurs because the graph develops new, stronger relationships that make old relationships difficult to reach; proactive interference because the weights are already established heavily in favor of historical concepts.
+
+\citep{ryan_frankland_2022, underwood_1957, oleary_natural_2024, bjork_bjork_1992}
+
+\subsection{Prediction}\label{sec:prediction}
+Prediction uses the current Context, Concepts, FeatureGroups, and their associated Transforms to predict the immediate next tick of the agent, and whether the prediction was accurate or not is used as a trigger for confidence building or error correction. Prediction starts with matching similar Concepts and Contexts. Prediction has three parts: 1) predicting the next tick; 2) resolving whether the prediction from the previous tick was accurate or not; 3) monitoring predictions over multiple ticks and multiple concepts for potential error correction and abstraction.
+
+\paragraph{Predicting the next tick}
+In the typical scenario, an agent will have an identified Context that can use its relationships to identify Transforms to apply to predict the next tick. Note that the Episodic Timeline graph of Section \ref{sec:episodic-timeline} can be refactored to be Concept-centric (see \ref{fig:concept-structure}):
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[
+    conc/.style={circle, draw, fill=concept, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
+    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
+    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
+    cedge/.style={thick, color=conceptedge},
+    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
+    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
+    x=1cm, y=1cm
+  ]
+    \node[conc]  (cpt) at (0,3.2)   {Concept};
+    \node[circ]  (fg1) at (-3,0)    {Feature\\Group};
+    \node[circ]  (fg2) at (3,0)     {Feature\\Group};
+    \node[trans] (t)   at (0,0)     {Transform};
+    \node[rel]   (rg1) at (-3,-3.2) {Context};
+    \node[rel]   (rg2) at (3,-3.2)  {Context};
+
+    % concept linked to its two feature groups (green lines)
+    \draw[cedge] (cpt) -- (fg1);
+    \draw[cedge] (cpt) -- (fg2);
+    % transform between the two feature groups
+    \draw[tedge] (fg1) -- (t);
+    \draw[tedge] (t) -- (fg2);
+    % each feature group relates into its context
+    \draw[assoc] (fg1) -- (rg1);
+    \draw[assoc] (fg2) -- (rg2);
+  \end{tikzpicture}
+  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Context} that each one participated in.}
+  \label{fig:concept-structure}
+\end{figure}
+
+Each (Context, FeatureGroup) pair has a Transform associated with it, as discussed previously in the Episodic Timeline section. Prediction then is simply applying the previously captured transforms to each Concept in the Context to predict where each Concept will be in the next state. Across all the potential transforms for a single Concept the Transforms to apply are calculated using:
+
+$$
+T^{*} \;=\; \operatorname*{arg\,max}_{T \,\in\, \mathcal{T}(C, K)} \; \frac{a_T}{a_T + b_T},
+$$
+
+where $\mathcal{T}(C, K)$ is the set of transforms recorded for Concept $C$ in Context $K$ and $(a_T, b_T)$ are the transform edge's Beta counts. $T^{*}$'s deltas are applied as point values to produce the predicted next state. Note that transforms are calculated and applied at the FeatureGroup, ensuring that Concepts with different relationships within the Context will predict according to their specific situations. For example, the Concept of a marble may have a position Transform associated with it if it is expected to roll. If there are two marbles present and one is on a flat, level surface and the other on an incline, the one on the flat surface would not apply the motion Transform (due to its relationship to the flat surface) and the one on the incline would apply the motion Transform (due to its relationship with the incline surface) -- the same Concept with two different instances, where each instance predicts separately.
+
+There are scenarios where Concepts may be known from previous experience; however, they are combined in a novel Context (e.g. experiencing a familiar object in a new place). In this scenario, the most similar previous Context associated with the Concept are used for prediction, enabling transfer of the Concept from an old Context to a new Context.
+
+If a Concept is newly Acquired and has no Transforms associated with it, there is no prediction that can be made -- only observation to acquire new Transforms for future use.
+
+\hl{TODO?} Finally, as time moves forward and motion and change comes into play, the Transformations between FeatureGroups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Contexts alone was low.
+
+\paragraph{Resolving predictions}
+
+\paragraph{Prediction monitoring}
+Each Concept instance in a scene has an associated Prediction Monitor that aggregates a record of how well the transforms for the Concept predicted the next state. The monitor is used to decide whether the wrong Concept is being applied \hl{TODO and...}. The Prediction Monitor's state is a running to total $W$ (in log units) of how much better rival explanations have predicted the instance's outcomes than the held Concept has. The monitor fires when:
+
+$$
+W \;\geq\; \log \frac{1}{\alpha_r(v)},
+$$
+
+where $\alpha_r$ is the lifetime probability that the monitor ever fires while the matched Concept remains an adequate predictor of the instance and the current valence magnitude $v$ lowers the boundary. \hl{TODO}
+
+\subsection{Concept Abstraction, Hoisting, Inheritance}\label{sec:abstraction}
+- Abstraction is how hierarchies of Concepts and Contexts are created
+- Abstraction is the mechanism that provides transference of knowledge: concepts in the same families are expected to provide the same predictions via their Transforms
+- Predicting the same is what makes Concepts candidates for abstraction. Matching identifies not only the current Concept that is the best match for a FeatureGroup, but also runner-up Concepts that beat the novelty hypothesis but were not the winners of the competition. The winner and the runner-ups are tracked by prediction monitors, and if they predict the same transforms (right or wrong), they are candidates for abstraction.
+- Abstraction is an economic savings for three reasons: 1) rather than holding on to a large amount of detail, only the necessary detail for the high-confidence predictions needs to be retained; 2) relationships can be formed and predictions can happen at higher levels, enabling faster predictions; 3) the newly extracted / abstracted concepts can be applied to more scenarios and newly encountered scenarios, enabling transference of knowledge / prediction.
+- Abstraction is a different mechanism than reification. Reification uses strength of sculpted edges as a grouping mechanism, not co-activation and co-prediction.
+- When a new level of concept is created, it hoists up the common contexts, relationships, feature groups, and transforms -- adding them to the new parent concept and removing them from the common concepts.
+- Child concepts inherit the contexts, feature groups, and transforms of their parents -- the common "dog" class of features and behaviors applies to all its children. Individual children can override the inheritance by retaining or adding specific features, contexts, or transforms to their own concepts enabling child-concept specific predictions. For example, "all dogs are generally nice but Fido tries to bite".
+- Transforms can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
+- The concept instances that contribute to the concept also contribute their known relationships and previous behaviors: the concept is expected to behave the same when the concepts surrounding it are the same.
+- This process is iterative: concepts can be iteratively abstracted, not requiring grounded concepts to form higher-level concepts. (See iterative / recursive abstraction below)
+- The same mechansims are used for Contexts to create a hierarchy of Contexts
+
+\citep{mandler_perceptual_2000}
+
+Concept First Layer Abstraction Diagram: \hl{TODO}
+Concept Second Layer Abstraction Diagram: \hl{TODO}
+
+\paragraph{Iterative / Recursive Abstraction}
+- Abstract concepts, relationships, transforms across different types into new concepts.
+- Iterative abstraction need not be across common types (concept + concept abstraction; etc.); New concepts may be formed on mixed types (concept + relationship abstraction; etc.)
+- Example: \hl{TODO}
+
+Iterative Abstraction Diagram(s): \hl{TODO}
+
 \subsection{Reification}
-- Uses strength of PresenceEdges (i.e. probability ~1) to create new parent Concepts
+- As the strength of PresenceEdge relationships between a Concept and its FeatureGroups, Relationships, Contexts, or Transforms approaches near certainty (i.e. probability ~1) with no competing relationships, those relationships are refactored to become their own Concepts -- they are "reified" into their own Concepts.
 - additive reification leads to mereology relationships: features that regularly occur on the same concept, in the same relationship, and have the same transforms are part of the same Concept (e.g. fingers are part of hand because they move with the hand, have consistent relationships to the hand, and move when the hand moves so they have the same transforms).
-- subtractive reification \hl{TODO}
+- subtractive reification takes an aspect of a Concept and elevates it to its own Concept. For example, creating the concept "red" from a single Feature edge for red that has been sculpted to near certainty. Or "fast" for a single Transform for a large movement in a single tick. this is the source of non-noun Concepts.
 
 \subsection{Sensory Valence}
 - Sensory valence (reward and punishment) signals (hunger, pain, pleasure, etc.) are not binary, but are continuous (degree of hunger, degree of pain, degree of pleasure, etc.). The signal is negative for situations to be avoided.
@@ -596,104 +722,34 @@ See Section \ref{pseudocode:edges} for pseudocode detailing the implementation o
   \label{fig:sensory-valence}
 \end{figure}
 
-\subsection{Retention / Forgetting}
-- Repetition through recall leads to retention (i.e. reinforcement). Every successful recall sculpts edges to increase their probability of their associated concepts being referenced in the future.
-- Forgetting is the process of reducing the weight of edges through decay (i.e. the effective evidence $\kappa$ and the presence counts decay towards a plasticity floor). Edges are not removed, but lose their priority in recall and / or reduce their confidence. "Forgotten" concepts are hard to reach but not gone and on re-encounter they can be recalled and the edges will quickly increase in confidence to restore its utility.
-- Forgetting is essential to the plasticity of the agent -- de-prioritizing old information allows new information to be utilized in the correct context. For example, if an object is moved the agent must be able to reduce the probability of the old location and increase the probability of the new location so that it can be recalled in the correct context.
-- Explains both aspects of forgetting due to interference: retroactive interference occurs because the graph develops new, stronger relationships that make old relationships difficult to reach; proactive interference because the weights are already established heavily in favor of historical concepts.
-
-\citep{ryan_frankland_2022, underwood_1957, oleary_natural_2024, bjork_bjork_1992}
-
-\subsection{Concept Abstraction, Hoisting, Inheritance}\label{sec:abstraction}
-- Frequently co-occurring and predictive features, relationships, and transforms are abstracted out to become new concepts. This is an economic savings for three reasons: 1) rather than holding on to a large amount of detail, only the necessary detail for the high-confidence predictions needs to be retained; 2) relationships can be formed and predictions can happen at higher levels, enabling faster predictions; 3) the newly extracted / abstracted concepts can be applied to more scenarios and newly encountered scenarios, enabling transference of knowledge / prediction.
-- Co-activation during matching leads to abstraction and is a different mechanism than reification. Reification uses strength of sculpted edges as a grouping mechanism, not co-activation.
-- When a new level of concept is created, it hoists up the common contexts, feature groups, and transforms -- adding them to the new parent concept and removing them from the common concepts.
-- Child concepts inherit the contexts, feature groups, and transforms of their parents -- the common "dog" class of features and behaviors applies to all its children. Individual children can override the inheritance by retaining or adding specific features, contexts, or transforms to their own concepts enabling child-concept specific predictions. For example, "all dogs are generally nice but Fido tries to bite".
-- Transforms can be abstracted to concepts. This enables reasoning and transference around concepts such as "fast" and "to the left"
-- The concept instances that contribute to the concept also contribute their known relationships and previous behaviors: the concept is expected to behave the same when the concepts surrounding it are the same.
-- This process is iterative: concepts can be iteratively abstracted, not requiring grounded concepts to form higher-level concepts. (See iterative / recursive abstraction below)
-- \hl{TODO: how do "red" (a pure feature) and "above" (a pure relationship) and "fast" (a pure transform) become concepts?}
-
-\citep{mandler_perceptual_2000}
-
-Concept First Layer Abstraction Diagram: \hl{TODO}
-Concept Second Layer Abstraction Diagram: \hl{TODO}
-
-\subsection{Iterative / Recursive Abstraction}
-- Can abstract concepts, relationships, transforms across different types into new concepts.
-- Iterative abstraction need not be across common types (concept + concept abstraction; etc.); New concepts may be formed on mixed types (concept + relationship abstraction; etc.)
-- Example: \hl{TODO}
-
-Iterative Abstraction Diagram(s): \hl{TODO}
-
-\subsection{Prediction}
-Prediction starts with matching similar Concepts and Contexts. The worst case scenario is the agent being presented an environment with no prior context. In this scenario Concepts are identified starting with saliency mechanisms selecting a Feature Group and then matching the Feature Group to a Concept based on spreading activation of features in Feature Groups -- whichever Concept has the most features in common with the saliency selected feature group is the most likely matching concept. This happens iteratively as saliency shifts attention around the environment. As Concepts are identified in the current environment, their relationships start to come into play, using Contexts associated with the Feature Groups of the concept to identify Feature Groups that have co-occurred in previous experience. Finally, as time moves forward and motion and change comes into play, the Transformations between Feature Groups associated with a concept can remove any final ambiguity if there are multiple potentially matching concepts or if the overall similarity based on Features and Contexts alone was low.
-
-Note that the Episodic Timeline graph of the previous section can be refactored to be Concept-centric. Each concept has its own Feature Groups, Transforms from one set of features to another, and the Contexts under which those transforms occurred. Having recognized Concepts of the scene, their current relationships (if any) can be used to predict the next Transform that will occur, which can be applied to the current world model of the agent to predict the next state. This occurs across all identified Concepts, predicting the next state of the environment.
-
-After matching the current context, or the concepts of the context if no context exists, prediction uses these edges to determine the most likely transforms that will apply to each concept and predict the next state of each concept in terms of its features and relationships to other concepts. The Normal-Gamma conjugate prior has its typical form:
-
-\begin{figure}[ht]
-  \centering
-  \begin{tikzpicture}[
-    conc/.style={circle, draw, fill=concept, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    circ/.style={circle, draw, fill=featuregroup, minimum size=1.4cm, font=\small, align=center, inner sep=1pt},
-    rel/.style={diamond, draw, fill=context, font=\scriptsize, align=center, inner sep=1pt},
-    trans/.style={rectangle, draw, fill=transform, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.8cm, minimum width=1.7cm},
-    cedge/.style={thick, color=conceptedge},
-    tedge/.style={-{Stealth[length=6pt]}, thick, dashed, color=transformedge},
-    assoc/.style={-{Stealth[length=6pt]}, thick, color=black!70},
-    x=1cm, y=1cm
-  ]
-    \node[conc]  (cpt) at (0,3.2)   {Concept};
-    \node[circ]  (fg1) at (-3,0)    {Feature\\Group};
-    \node[circ]  (fg2) at (3,0)     {Feature\\Group};
-    \node[trans] (t)   at (0,0)     {Transform};
-    \node[rel]   (rg1) at (-3,-3.2) {Context};
-    \node[rel]   (rg2) at (3,-3.2)  {Context};
-
-    % concept linked to its two feature groups (green lines)
-    \draw[cedge] (cpt) -- (fg1);
-    \draw[cedge] (cpt) -- (fg2);
-    % transform between the two feature groups
-    \draw[tedge] (fg1) -- (t);
-    \draw[tedge] (t) -- (fg2);
-    % each feature group relates into its context
-    \draw[assoc] (fg1) -- (rg1);
-    \draw[assoc] (fg2) -- (rg2);
-  \end{tikzpicture}
-  \caption{A Concept (green) retains links to the Feature Groups that instantiate it. Two such Feature Groups are shown, together with the \emph{Transform} that captures the change between them and the \emph{Context} that each one participated in.}
-  \label{fig:concept-structure}
-\end{figure}
-
-- The agent is able to predict what will happen next based on the concept instances that are present. Each concept instance, with enough previous experience, has its own predicted behavior and predicted behavior in the presence of other known concepts. 
-- Since the agent can predict the currently present objects, it can predict how its own actions will influence them.
-- Successful prediction leads to reinforcement / additional weighting of the concepts used in the prediction.
-- Failure in prediction leads to a new temporal association with the concepts.
-
 \subsection{Action}
-\begin{itemize}
-    \item Scripts of actions (a/k/a "habits") based on strongly associated conceptual timelines
-    \item Deviations based on prediction error are quickly recovered
-    \item Actions are selected based on prediction: each individual object is predicted giving the agent a prediction of the upcoming state. The agent selects actions by searching through the immediate predictions and potential sensory valence.
-    \item Actions are recorded with relation to the current context, enabling transference of actions to future scenarios with the same or similar context.
-    \item Actions are not selected based on long-term sensory valence, they are selected for general homeostasis. Only if there is a problem (predicted threat, negative sensory valence due to hunger, etc.) will they seek out solutions using Option Generation and Simulation.
-\end{itemize}
+- Two types of action: valence driven and habit driven
 
-\subsection{Simulation}
-- Concepts and temporal traces enable simulation of known and novel situations
-- Play through temporal links
-- Modified simulation: play through temporal links with modifications
+\paragraph{Valence Selected Actions}
+- Intrinsic valence (e.g. pain, hunger) creates problems for the agent that it must solve. In order to identify solutions to the problem, valence also acts as the index to potential solutions. The agent Simulates the path to the potential solutions and selects a satisficing option.
+- Actions are not selected based on reward signals, they are selected for general homeostasis. Only if there is a problem (predicted threat, negative sensory valence due to hunger, etc.) will they seek out solutions using Option Generation and Simulation.
 
-\subsection{Option Generation}
+\paragraph{Habit Selected Actions}
+- Actions are recorded with relation to the current context, enabling transference of actions to future scenarios with the same or similar context.
+- Actions are selected based on Context: the actions that were taken previously in the given context are the actions that will be taken again.
+- As the PresenceEdge of Actions trend towards certainty (i.e. ~1) they create scripts of actions (a/k/a "habits") based on strongly associated conceptual timelines
+
+\paragraph{Option Generation}
 - Indexes: concepts, timelines, valence
 - "I'm hungry" -- find solutions to the problem through association; uses valence to find previous solutions
 - Seeking out solutions to current problems is based on using Sensory Valence associated with the specific anticipated problem to identify options for solutions, then simulation to select options and potential paths to the options.
+
+\subsection{Simulation}
+- Contexts and transforms can be iterated through without taking actions to simulate situations
+- (something) can create Contexts on the side that influence the path of the simulation so that the PresenceEdges followed in the simulation are not always the strongest edges
+- Modified simulation: play through temporal links with modifications
 
 \subsection{Introspection}
 - Internal states must be available for observation to enable introspection
 - Internal states that are available for introspection likely include confidence levels of prediction and simulation, recent memory, and recent perception -- basically the ability to inspect the recent episodic timeline.
 
+\subsection{Future Work}
+- Concepts and Contexts use many of the same structures and mechanisms (prediction monitors, abstraction, etc.). Can they be combined into a single structure? Or do they necessarily need to be separate.
 
 \section{References}
 \bibliographystyle{plainnat}
@@ -834,6 +890,8 @@ def main():
 \end{minted}
 
 \section{Sufficiency Tests}
+These are thought experiments to ensure that our cognitive architecture can (eventually) address the concerns below; however, it should be noted that the sufficiency tests are operating at a level of abstraction that wouldn't be initially available. Initially Concepts are operating at the Feature / FeatureGroup level -- which is pixels, waveforms, etc. These sufficiency tests presume that there have been multiple rounds of substantial acquisition and abstraction to create functional high-level concepts like "dog" and "cat" and "frisbee".
+
 \subsection{A cat is not a dog}
 - The agent has seen multiple dogs before of different varieties: roughly large, furry, four legged creatures, that pant, and are friendly. The agent encounters a new dog that generally meets the criteria of previous dogs, but has a few subtle differences such as pointier ears and whiskers. When the agent approaches the dog, it runs away which is counter to prediction. When the agent continues to pursue the dog it hisses and swipes its claws at the agent. This is not the behavior of previous dogs, it must be something new. A cat. 
 - This is a demonstration of bifurcation of concepts based on different predictions of the objects.
